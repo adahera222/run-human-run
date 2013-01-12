@@ -1,4 +1,4 @@
 run-human-run
 =============
 
-run, human run! 3D Platform game created with Unity.
+run, human run! 3D Platform game created with Unity and mainly for Android.
