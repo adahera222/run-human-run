@@ -4,6 +4,14 @@
 
 import System.Collections.Generic;
 
+// Enumerator sluzacy do opisu, czy postac jest w trakcie uniku i jesli tak,
+// to w ktora strone unika
+enum DodgeState {
+	Straight,
+	Left,
+	Right
+}
+
 // poczatkowy kierunek, w ktorym zwrocony jest gracz
 var initDirection = Vector3.forward;
 
@@ -26,13 +34,15 @@ var initJumpSpeed = 5.0;
 private var vSpeed = Vector3.zero;
 
 // maksymalny zasieg uniku
-var maxDodgeRange = 0.5;
-// szerokosc aktualnego uniku
-private var currentDodgeSize = 0.0;
+var maxDodgeRange = 2.0;
+// zasieg aktualnego uniku
+private var currentDodgeRange = 0.0;
 // czas trwania uniku
 var maxDodgeTime = 1.0;
 // czas trwania aktualnego uniku
-private var currentDodgeTime;
+private var currentDodgeTime: float;
+// czy jest unik i jesli tak, to w ktora strone
+private var currentDodgeState = DodgeState.Straight;
 
 
 // punkt sciezki, do ktorego w danej chwili dazy gracz
@@ -65,6 +75,11 @@ function Update () {
 	if (Input.GetKeyDown(KeyCode.J) && canJump()) {
 		Jump();
 	}
+	if (Input.GetKeyDown(KeyCode.Q) && canDodge()) {
+		Dodge(DodgeState.Left);
+	} else if (Input.GetKeyDown(KeyCode.E) && canDodge()) {
+		Dodge(DodgeState.Right);
+	}
 	Move();
 	if (targetPoints.Count < knownPathPointsCount) {
 		SendMessage("SendNextPoints");
@@ -80,7 +95,7 @@ function Land () {
 }
 
 function canJump () : boolean {
-	return isTouchingGround();
+	return isTouchingGround() && !isDodging();
 }
 
 function isJumping () : boolean {
@@ -91,12 +106,74 @@ function ApplyGravity () {
 	vSpeed.y -= gravity * Time.deltaTime;
 }
 
-function Dodge (right: boolean) {
-	// TODO
+function Dodge (dodgeState: DodgeState) {
+	currentDodgeState = dodgeState;
+	currentDodgeRange = 0.0;
+	currentDodgeTime = 0.0;
 }
 
-function canDodge () {
+function ShouldEndDodge () : boolean {
+	return currentDodgeTime >= maxDodgeTime;
+}
 
+function EndDodge () {
+	currentDodgeState = DodgeState.Straight;
+	currentDodgeRange = 0.0;
+	currentDodgeTime = 0.0;
+}
+
+function canDodge () : boolean {
+	return isTouchingGround();
+}
+
+function isDodging () : boolean {
+	return currentDodgeState != DodgeState.Straight;
+}
+
+function ApplyDodge () {
+	var pNR = currentDodgeTime / maxDodgeTime;
+	currentDodgeTime += Time.deltaTime;
+	var normalizedCurrentTime = currentDodgeTime / maxDodgeTime;
+	if (pNR <= 0.5 && normalizedCurrentTime > 0.5) {
+		Debug.Log("ZMIANA");
+	}
+	if (normalizedCurrentTime < 0.5) {
+		currentDodgeRange = Mathf.Lerp(0, maxDodgeRange, 2 * normalizedCurrentTime);
+	} else {
+		currentDodgeRange = Mathf.Lerp(0, maxDodgeRange, 2 - 2 * normalizedCurrentTime);
+	}
+	
+	return pNR <= 0.5 && normalizedCurrentTime > 0.5;
+}
+
+function GetDodgeVector(movement: Vector3) : Vector3 {
+	var dodgeVector: Vector3;
+	if (!isDodging()) {
+		dodgeVector = movement;
+	} else {
+		var rotationAngle = (currentDodgeState == DodgeState.Right) ? 90 : -90;
+		var dodgeRotation = Quaternion.AngleAxis(rotationAngle, Vector3.up);
+		dodgeVector = dodgeRotation * movement;
+		dodgeVector.Normalize();
+		dodgeVector *= Time.deltaTime * currentDodgeRange;
+	}
+	return dodgeVector;
+}
+
+function GetMovementWithDodge (movement: Vector3) : Vector3 {
+	var dodgeVector = GetDodgeVector(movement);
+	var resultVector = movement + dodgeVector;
+	// krok opcjonalny, zapobiega skracaniu drogi na zakretach przy unikaniu
+	resultVector *=  movement.magnitude/ resultVector.magnitude;
+	return resultVector;
+}
+
+function GetTargetPointWithDodge (targetPoint: Vector3) : Vector3 {
+	var prevDirection = transform.rotation * Vector3.forward;
+	var dodgeVector = GetDodgeVector(prevDirection);
+	Debug.Log("DV: " + dodgeVector);
+	Debug.Log("x: " + dodgeVector.x + ", y: " + dodgeVector.y + ", z: " + dodgeVector.z);
+	return targetPoint + dodgeVector;
 }
 
 function isTouchingGround () : boolean {
@@ -134,16 +211,33 @@ function Move () {
 	}
 	targetPoint = targetPoints[0];
 	
+	if (isDodging()) {
+		//Debug.Log("PRE: " + targetPoint);
+		targetPoint = GetTargetPointWithDodge(targetPoint);
+		//Debug.Log("POST: " + targetPoint);
+	}
+	
 	if (!isJumping() && transl != Vector3.zero) {
 		var prevRot = transform.rotation;
 		var rot = prevRot;
 		rot.SetLookRotation(transl);
 		transform.rotation = Quaternion.Slerp(prevRot, rot, angleAcceleration);
 	}
-
+	
 	var prevPos = transform.position;
 	var movement = transform.rotation * (speed * Vector3.forward * Time.deltaTime);
 	var movementWithJump = GetMovementWithJump(movement);
+	
+	if (ShouldEndDodge()) {
+		EndDodge();
+		Debug.Log("DODGE END");
+	} else if (isDodging()) {
+		var x = ApplyDodge();
+		if (x && debugDraw) {
+			Debug.DrawLine(transform.position, targetPoint, Color.blue, 100);
+		}
+		movementWithJump = GetMovementWithDodge(movementWithJump);
+	}
 	
 	var controller : CharacterController = GetComponent(CharacterController);
 	controller.Move(movementWithJump);
