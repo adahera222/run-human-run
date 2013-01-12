@@ -74,8 +74,6 @@ private var currentDodgeTime: float;
 // czy jest unik i jesli tak, to w ktora strone
 private var currentDodgeState = DodgeState.Straight;
 
-
-
 /*****************************************************************************/
 /*****************************************************************************/
 
@@ -97,7 +95,18 @@ function Update () {
 	} else if (Input.GetKeyDown(KeyCode.E) && CanDodge()) {
 		Dodge(DodgeState.Right);
 	}
-	Move();
+	
+	var mobileInputController : MobileInputController = GetComponent(MobileInputController);
+	if (mobileInputController.shouldJump() && CanJump()) {
+		Jump();
+	}
+	if (mobileInputController.shouldDodgeLeft() && CanDodge()) {
+		Dodge(DodgeState.Left);
+	} else if (mobileInputController.shouldDodgeRight() && CanDodge()) {
+		Dodge(DodgeState.Right);
+	}
+	
+	Move(mobileInputController.GetMoveBonus());
 	if (targetPoints.Count < knownPathPointsCount) {
 		SendMessage("SendNextPoints");
 	}
@@ -121,14 +130,14 @@ function NormalizeTargetPoint(point: Vector3) {
 
 // Funkcja przemieszczajaca gracza, dokonuje ewentualnej aktualizacji
 // celu ruchu.
-function Move () {
+function Move (bonusSpeed: float) {
 	// "normalizacja" celu => przeniesienie go na te sama wysokosc, co gracz
 	var normalizedTargetPoint = NormalizeTargetPoint(targetPoint);
 	// roznica miedzy aktualnym polozeniem a "znormalizowanym" celem
 	var transl = normalizedTargetPoint - transform.position;
 	
 	// automatyczne przyspieszenie
-	speed = Mathf.Lerp(speed, maxSpeed, Time.deltaTime * acceleration);
+	speed = Mathf.Lerp(speed, maxSpeed + bonusSpeed, Time.deltaTime * acceleration);
 	
 	// zmiana celu tak dlugo, az cel jest wystarczajaco daleko, czyli
 	// okolo sekundy ruchu z aktualna predkoscia od gracza
