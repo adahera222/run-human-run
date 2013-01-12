@@ -79,13 +79,10 @@ private var pathGenerator: PathGenerator;
 // liczba generowanych przeszkod na kladce
 var obstaclesPerPad = 1;
 
-var dh = 0.0;
-
 /*****************************************************************************/
 /*****************************************************************************/
 
 function Awake () {
-	//playerOffset = Vector3(0.0, -transform.lossyScale.y - 0.01, 0.0);
 	playerOffset = Vector3(0.0, -transform.lossyScale.y, 0.0);
 	pathGenerator = gameObject.GetComponent(PathGenerator);
 	if (pathGenerator == null) {
@@ -103,7 +100,7 @@ function Start () {
 
 // Wyslanie zapytania do generatora sciezki o nowe punkty, jesli sa potrzebne
 function Update () {
-	if (areNewPointsNeeded()) {
+	if (AreNewPointsNeeded()) {
 		UpdatePath(pathGenerator.GeneratePath(batchPointsCount));
 		missingPointsCount = 0;
 	}
@@ -118,7 +115,7 @@ function IsUnableToSendNextPoint() : boolean {
 }
 
 // Sprawdzenie, czy potrzebne sa nowe punkty sciezki
-function areNewPointsNeeded() : boolean {
+function AreNewPointsNeeded() : boolean {
 	return missingPointsCount == batchPointsCount;
 }
 
@@ -134,19 +131,7 @@ function UpdatePathIndexes() {
 	}
 }
 
-// Wyslanie nowego punktu sciezki do gracza
-/*function SendNextPoint() {
-	if (IsUnableToSendNextPoint()) {
-		Debug.LogError("Cannot send next point");
-	} else {
-		UpdatePathIndexes();
-		lastSentPoint = pads[sentPadIndex].Points[sentPointIndex];
-		var padOffset = Vector3(0, - pads[sentPadIndex].Prefab.lossyScale.y / 2, 0);
-		SendMessage("UpdateTarget", lastSentPoint - playerOffset - padOffset);
-		missingPointsCount += 1;
-	}
-}*/
-
+// Wyslanie listy celow do gracza
 function SendNextPoints () {
 	var points = new List.<Vector3>();
 	for (var i = 0; i < batchPointsCount; i++) {

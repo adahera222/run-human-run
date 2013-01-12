@@ -28,7 +28,7 @@ function Start () {
 
 function ShouldMoveHead() {
 	var playerMoveScript : PlayerMoveScript = player.GetComponent(PlayerMoveScript);
-	return !playerMoveScript.isJumping();
+	return !playerMoveScript.IsJumping();
 }
 
 function Update () {

@@ -46,10 +46,10 @@
   <ItemGroup>
      <Compile Include="Assets\scripts\camera\CameraManagerScript.js" />
      <Compile Include="Assets\scripts\camera\CameraMoveScript.js" />
-     <Compile Include="Assets\scripts\camera\EnvironmentGenerationScript.js" />
      <Compile Include="Assets\scripts\camera\ObservatorCameraScript.js" />
-     <Compile Include="Assets\scripts\camera\PathGenerator.js" />
+     <Compile Include="Assets\scripts\environment\EnvironmentGenerationScript.js" />
      <Compile Include="Assets\scripts\environment\ObstacleCollisionScript.js" />
+     <Compile Include="Assets\scripts\environment\PathGenerator.js" />
      <Compile Include="Assets\scripts\player\PlayerMoveScript.js" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
