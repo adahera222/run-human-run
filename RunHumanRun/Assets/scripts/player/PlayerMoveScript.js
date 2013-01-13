@@ -84,6 +84,8 @@ function Awake () {
 }
 
 function Start () {
+	var playerStatus : ThirdPersonStatus = GetComponent(ThirdPersonStatus);
+	playerStatus.SetUp();
 }
 
 function Update () {
@@ -97,6 +99,8 @@ function Update () {
 	}
 	
 	var mobileInputController : MobileInputController = GetComponent(MobileInputController);
+	var playerStatus : ThirdPersonStatus = GetComponent(ThirdPersonStatus);
+	
 	if (mobileInputController.shouldJump() && CanJump()) {
 		Jump();
 	}
@@ -106,7 +110,10 @@ function Update () {
 		Dodge(DodgeState.Right);
 	}
 	
-	Move(mobileInputController.GetMoveBonus());
+	var moveBonus = mobileInputController.GetMoveBonus();
+	Move(moveBonus);
+	playerStatus.AddPoints(Time.deltaTime);
+	playerStatus.AddBonusPoints(moveBonus);
 	if (targetPoints.Count < knownPathPointsCount) {
 		SendMessage("SendNextPoints");
 	}

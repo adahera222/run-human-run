@@ -36,7 +36,7 @@ private var hasToReturnPostionAfterJump : boolean = false;
 // granica, jak bardzo gracz musi wyprostowac telefon po skoku
 private var jumpBackEdge : float = -0.2;
 // granica, jak bardzo gracz musi przechylic do siebie telefon, by wykonac skok
-private var jumpUpEdge : float = -0.5;
+private var jumpUpEdge : float = -0.4;
 
 // czy gracz musi wyprostowac telefon po wykonaniu uniku w lewa strone
 private var hasToReturnPositionAfterTurnLeft : boolean = false;

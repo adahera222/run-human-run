@@ -1,15 +1,6 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\scripts\player\PlayerMoveScript.js">
-    <Files>
-      <File FileName="Assets\scripts\player\PlayerMoveScript.js" Line="175" Column="37" />
-      <File FileName="Assets\scripts\camera\CameraMoveScript.js" Line="1" Column="1" />
-      <File FileName="Assets\scripts\camera\CameraManagerScript.js" Line="1" Column="1" />
-      <File FileName="Assets\scripts\camera\ObservatorCameraScript.js" Line="1" Column="1" />
-      <File FileName="Assets\scripts\environment\EnvironmentGenerationScript.js" Line="1" Column="1" />
-      <File FileName="Assets\scripts\environment\ObstacleCollisionScript.js" Line="1" Column="1" />
-    </Files>
-  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.Workbench />
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
     <BreakpointStore />
   </MonoDevelop.Ide.DebuggingService.Breakpoints>
