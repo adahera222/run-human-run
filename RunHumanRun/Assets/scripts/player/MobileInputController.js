@@ -189,6 +189,12 @@ function Update() {
 			}
 		}
 	}
+	
+    if (Application.platform == RuntimePlatform.Android) {
+		if (Input.GetKey(KeyCode.Escape)) {
+			Application.LoadLevel("GameOverSingle");
+		}
+	}
 }
 
 function shouldJump() {

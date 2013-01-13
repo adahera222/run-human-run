@@ -1,3 +1,22 @@
-RunHumanRun/Build/*
-RunHumanRun/Temp/*
-/RunHumanRun/Library
+############
+
+# Unity3D .gitignore file. from page http://macykuang.com/?p=182
+
+RunHumanRun/.DS_Store
+RunHumanRun/Library/AssetImportState
+RunHumanRun/Library/AssetServerCacheV3
+RunHumanRun/Library/FailedAssetImports.txt
+RunHumanRun/Library/ScriptAssemblies
+RunHumanRun/Library/ScriptMapper
+RunHumanRun/Library/assetDatabase3
+RunHumanRun/Library/cache
+RunHumanRun/Library/expandedItems
+RunHumanRun/Library/metadata
+RunHumanRun/Library/previews
+RunHumanRun/Library/guidmapper
+RunHumanRun/Temp
+*.csproj
+*.pidb
+*.sln
+RunHumanRun/build
+############

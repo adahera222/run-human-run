@@ -3,14 +3,14 @@
 // Keeps track of inventory, health, lives, etc.
 
 
-private var points : float = 0.0;
+private static var points : float = 0.0;
 
 function Awake()
 {
 }
 
 // Utility function used by HUD script:
-function GetPoints() : int
+static function GetPoints() : int
 {
 	return points;
 }
