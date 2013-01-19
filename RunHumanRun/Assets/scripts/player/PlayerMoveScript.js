@@ -36,7 +36,6 @@ private var speed = 0.0;
 // szybkosc zmiany kata ruchu
 var angleAcceleration = 0.03;
 
-
 // ZDERZENIA
 
 // wspolczynnik kary za dotkniecie przeszkody
@@ -51,6 +50,8 @@ var gravity = 10.0;
 var initJumpSpeed = 5.0;
 // szybkosc w pionie (najpierw wznoszenia, potem spadania)
 private var vSpeed = Vector3.zero;
+// czy osiagnal szczyt podczas skoku
+private var jumpingReachedApex = false;
 
 
 // UNIKI
@@ -74,6 +75,8 @@ private var currentDodgeTime: float;
 // czy jest unik i jesli tak, to w ktora strone
 private var currentDodgeState = DodgeState.Straight;
 
+private var isJumping = false;
+
 /*****************************************************************************/
 /*****************************************************************************/
 
@@ -89,6 +92,11 @@ function Start () {
 }
 
 function Update () {
+	if (IsJumping() && IsTouchingGround()) {
+		isJumping = false;
+		SendMessage("DidLand", SendMessageOptions.DontRequireReceiver);
+	}
+
 	if (Input.GetKeyDown(KeyCode.J) && CanJump()) {
 		Jump();
 	}
@@ -168,6 +176,9 @@ function Move (bonusSpeed: float) {
 		rot.SetLookRotation(transl);
 		transform.rotation = Quaternion.Slerp(prevRot, rot, angleAcceleration);
 	}
+	else if (!jumpingReachedApex && vSpeed.y <= 0.0) {
+		jumpingReachedApex = true;
+	}
 	
 	// wyznaczanie ruchu
 	var prevPos = transform.position;
@@ -223,6 +234,8 @@ function OnControllerColliderHit (hit : ControllerColliderHit) {
 // RUCH W PIONIE
 
 function Jump () {
+	jumpingReachedApex = false;
+	isJumping = true;
 	vSpeed = Vector3(0.0, initJumpSpeed, 0.0);
 }
 
@@ -235,7 +248,7 @@ function CanJump () : boolean {
 }
 
 function IsJumping () : boolean {
-	return !IsTouchingGround();
+	return isJumping;
 }
 
 function ApplyGravity () {
@@ -255,6 +268,12 @@ function Dodge (dodgeState: DodgeState) {
 	currentDodgeState = dodgeState;
 	currentDodgeRange = 0.0;
 	currentDodgeTime = 0.0;
+	if (dodgeState == DodgeState.Left) {
+		SendMessage("DodgeLeft", SendMessageOptions.DontRequireReceiver);
+	} else {
+		SendMessage("DodgeRight", SendMessageOptions.DontRequireReceiver);
+	}
+	
 }
 
 function ShouldEndDodge () : boolean {
@@ -326,4 +345,9 @@ function GetSpeed () {
 
 function GetMaxSpeed () {
 	return maxSpeed;
+}
+
+function HasJumpReachedApex ()
+{
+	return jumpingReachedApex;
 }

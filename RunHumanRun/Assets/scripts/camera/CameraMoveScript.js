@@ -21,7 +21,7 @@ private var angle = 0.0;
 private var hasJustLanded = false;
 
 function Start () {
-	offset = Vector3(0.0, height, 0.5);
+	offset = Vector3(0.0, height + 2.0, -3.0);//0.5);
 	transform.position = player.position + offset;
 	transform.rotation = player.rotation;
 }

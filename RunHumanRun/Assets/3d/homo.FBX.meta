@@ -203,8 +203,8 @@ ModelImporter:
       skeletonMaskElements: []
     - name: jumpland
       takeName: Take 001
-      firstFrame: 100
-      lastFrame: 110
+      firstFrame: 110
+      lastFrame: 120
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -225,8 +225,8 @@ ModelImporter:
       skeletonMaskElements: []
     - name: jumpfall
       takeName: Take 001
-      firstFrame: 110
-      lastFrame: 120
+      firstFrame: 100
+      lastFrame: 110
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -292,9 +292,9 @@ ModelImporter:
     isReadable: 1
   meshes:
     lODScreenPercentages: []
-    globalScale: .00999999978
+    globalScale: .5
     meshCompression: 0
-    addColliders: 0
+    addColliders: 1
     swapUVChannels: 0
     generateSecondaryUV: 0
     useFileUnits: 1

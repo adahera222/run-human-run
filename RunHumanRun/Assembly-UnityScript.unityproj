@@ -57,6 +57,7 @@
      <Compile Include="Assets\scripts\misc\StartMenu.js" />
      <Compile Include="Assets\scripts\player\MobileInputController.js" />
      <Compile Include="Assets\scripts\player\PlayerMoveScript.js" />
+     <Compile Include="Assets\scripts\player\ThirdPersonPlayerAnimation.js" />
      <Compile Include="Assets\scripts\player\ThirdPersonStatus.js" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
