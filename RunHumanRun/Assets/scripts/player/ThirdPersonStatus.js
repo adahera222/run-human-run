@@ -3,7 +3,9 @@
 // Keeps track of inventory, health, lives, etc.
 
 
+
 private static var points : float = 0.0;
+private var playerNr: int;
 
 function Awake()
 {
@@ -30,4 +32,12 @@ function AddBonusPoints (no : float)
 function SetUp ()
 {
 	points = 0;
+}
+
+function SetNr(nr : int) {
+	playerNr = nr;
+}
+
+function GetNr() {
+	return playerNr;
 }

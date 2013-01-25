@@ -39,7 +39,7 @@ function OnGUI()
 	nextItemPosY += 100;
 	if (GUI.Button(Rect((Screen.width / 2 - buttonMultiTex.width), nextItemPosY, buttonMultiTex.width*2, buttonMultiTex.height*2), buttonMultiTex)) {
 		isLoading = true;
-		//TODO
+		Application.LoadLevel("MultiplayerSettings");
 	}
 	
 	nextItemPosY += 100;

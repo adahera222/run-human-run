@@ -6,11 +6,11 @@
 #pragma strict
 
 import System.Collections.Generic;
+import client_server;
 
 // Klasa przechowujaca informacje o kladce tworzacej sciezke,
 // po ktorej biegnie gracz
-public class PathPad extends System.ValueType
-{
+public class PathPad extends System.ValueType {
     public var Position: Vector3;
     public var Rotation: Quaternion;
     public var Prefab: Transform;
@@ -27,8 +27,7 @@ public class PathPad extends System.ValueType
 }
 
 // Klasa reprezentujaca przeszkode na drodze
-public class Obstacle extends System.ValueType
-{
+public class Obstacle extends System.ValueType {
 	public var Position: Vector3;
     public var Rotation: Quaternion;
     public var Prefab: Transform;
@@ -53,19 +52,12 @@ var debugDraw = true;
 
 // liczba punktow, ktore maja byc naraz generowane
 private var batchPointsCount = 20;
-// liczba punktow, ktore zostaly wyslane do gracza, a nie zostaly
-// w ich miejsce wygenerowane nowe
-private var missingPointsCount = 0;
+// odleglosc, na jaka widzi gracz, musza byc generowane punkty
+// jesli sciezka konczy sie przed linia wzroku gracza
+var sightDistance: double = 50.0;
 
 // lista utworzonych kladek
 private var pads: List.<PathPad> = new List.<PathPad>();
-
-// indeksy kladki i punktu na tej kladce, ktory byl ostatnio wyslany do gracza
-private var sentPadIndex = -1;
-private var sentPointIndex = -1;
-
-// ostatnio wyslany do gracza punkt
-private var lastSentPoint: Vector3;
 
 // ostatnio wygenerowany punkt
 private var lastGeneratedPoint: Vector3;
@@ -78,6 +70,15 @@ private var pathGenerator: PathGenerator;
 
 // liczba generowanych przeszkod na kladce
 var obstaclesPerPad = 1;
+
+// tryb gry: single/multi
+private var singlePlayerMode: boolean;
+
+// czy ten generator ma generowac punkty (czy jest przyczepiony do I gracza)
+private var meGenerating: boolean;
+
+// zarzadca gry
+private var gameManager: GameManager;
 
 /*****************************************************************************/
 /*****************************************************************************/
@@ -93,55 +94,34 @@ function Awake () {
 // Zapisanie przesuniecia gracza na poczatku (powinien byc w normalnej pozycji)
 // oraz sprawdzenie prefabow.
 function Start () {
+	var gameManagerObj = GameObject.Find("GameManager");
+	gameManager = gameManagerObj.GetComponent("GameManager") as GameManager;
+	if (!gameManager) {
+		Debug.LogError("Env Gen: unable to find GameManager in Awake()");
+	}
+	
 	CheckPrefabs();
-	UpdatePath(pathGenerator.GenerateInitialPath());
-	SendNextPoints();
+	singlePlayerMode = gameManager.IsSinglePlayerGame();
+	meGenerating = (gameObject == gameManager.GetHuman());
+	
+	var proxy = GetComponent("ProxyEnvironmentGenerator") as ProxyEnvironmentGenerator;
+	proxy.CopyPrefabs(pathPrefabs, obstaclesPrefabs);
+	proxy.Init();
+	if (meGenerating) {
+		UpdatePath(pathGenerator.GenerateInitialPath());
+	}
 }
 
 // Wyslanie zapytania do generatora sciezki o nowe punkty, jesli sa potrzebne
 function Update () {
-	if (AreNewPointsNeeded()) {
-		UpdatePath(pathGenerator.GeneratePath(batchPointsCount));
-		missingPointsCount = 0;
+	if (meGenerating && AreNewPointsNeeded()) {
+		UpdatePath(pathGenerator.GeneratePath(batchPointsCount, true));
 	}
-}
-
-// Sprawdzenie, czy jest mozliwosc wyslania punktu.
-// Nie mozna wyslac punktu, jesli brak kladek LUB
-// postac jest na ostatniej kladce i brak kolejnych punktow
-function IsUnableToSendNextPoint() : boolean {
-	return pads.Count == 0 || (pads.Count == sentPadIndex + 1 &&
-												pads[sentPadIndex].Points.Count == sentPointIndex + 1);
 }
 
 // Sprawdzenie, czy potrzebne sa nowe punkty sciezki
 function AreNewPointsNeeded() : boolean {
-	return missingPointsCount == batchPointsCount;
-}
-
-// Aktualizacja/inkrementacja indeksow ostatnio wyslanego punktu i kladki
-function UpdatePathIndexes() {
-	if (sentPadIndex == -1) {
-		sentPadIndex = sentPointIndex = 0;
-	} else if (pads[sentPadIndex].Points.Count == sentPointIndex + 1) {
-		sentPadIndex += 1;
-		sentPointIndex = 0;
-	} else {
-		sentPointIndex += 1;
-	}
-}
-
-// Wyslanie listy celow do gracza
-function SendNextPoints () {
-	var points = new List.<Vector3>();
-	for (var i = 0; i < batchPointsCount; i++) {
-		UpdatePathIndexes();
-		lastSentPoint = pads[sentPadIndex].Points[sentPointIndex];
-		var padOffset = Vector3(0, - pads[sentPadIndex].Prefab.lossyScale.y / 2, 0);
-		points.Add(lastSentPoint - playerOffset - padOffset);
-		missingPointsCount += 1;
-	}
-	SendMessage("UpdateTargets", points);
+	return (transform.position - lastGeneratedPoint).magnitude < sightDistance;
 }
 
 // Sprawdzenie, czy wszystkie prefaby nie sa nullami oraz czy istnieje
@@ -162,7 +142,7 @@ function CheckPrefabs() {
 }
 
 // Wygenerowanie nowej kladki tworzacej sciezke razem z przeszkodami
-function GeneratePad (next: Vector3) {
+function GeneratePadState (next: Vector3) : PadState {
 	var prev = (pads.Count == 0) ?
 							next + transform.rotation * (0.01 * Vector3.back) : lastGeneratedPoint;
 	var border = (prev + next) / 2;
@@ -176,29 +156,36 @@ function GeneratePad (next: Vector3) {
 	var position = border + trans * (newElement.lossyScale.z / 2) + padOffset;
 	var rotation: Quaternion = (trans != Vector3.zero) ? Quaternion.LookRotation(trans) : Quaternion.identity;
 	
-	
-	Instantiate(newElement, position, rotation);
 	var pad = new PathPad(position, rotation, newElement);
 	pads.Add(pad);
 	
-	GenerateObstacles(pad);
+	var obstacles: ObstacleState[] = GenerateObstacles(pad);
+	return PadState(index, obstacles);
 }
 
 // Wygenerowanie nowych kladek, jesli sa potrzebne
-function GeneratePads (positions: Vector3[]) {
+function GeneratePadsStates(positions: Vector3[]) : PadState[] {
+	var padsStates: PadState[];
 	if (positions.Length > 0) {
+		var padsStatesList: List.<PadState> = new List.<PadState>();
 		for (position in positions) {
 			if (ShouldGeneratePad(position)) {
-				GeneratePad(position);
+				padsStatesList.Add(GeneratePadState(position));
 			}
 			lastGeneratedPoint = position;
 			var padOffset = Vector3(0, - pads[pads.Count - 1].Prefab.lossyScale.y / 2, 0);
 			var generatedPosition = position + padOffset;
 			pads[pads.Count - 1].Points.Add(generatedPosition);
 		}
+		padsStates = new PadState[padsStatesList.Count];
+		for (var i = 0; i < padsStatesList.Count; i++) {
+			padsStates[i] = padsStatesList[i];
+		}
 	} else {
 		Debug.Log("Empty list of pads' positions in generator");
+		padsStates = new PadState[0];
 	}
+	return padsStates;
 }
 
 // Sprawdzenie, czy potrzeba stworzyc nowa kladke, czyli czy
@@ -222,17 +209,50 @@ function UpdatePath(positions: Vector3[]) {
 	var translatedPositions = new Vector3[positions.Length];
 	for (var i = 0; i < positions.Length; i++) {
 		translatedPositions[i] = positions[i] + playerOffset;
-		if (debugDraw && i > 0) {
-			Debug.DrawLine(translatedPositions[i - 1] + Vector3(0, 0.6, 0),
-										translatedPositions[i] + Vector3(0, 0.6, 0), Color.green, 1000.0);
-		}
 	}
 	
-	GeneratePads(translatedPositions);
+	//var padsStates: PadState[] = GeneratePadsStates(translatedPositions);
+	var padsStates: PadState[] = GeneratePadsStates(positions);
+	
+	SendData(positions, padsStates);
+}
+
+function SendData(positions: Vector3[], padsStates: PadState[]) {
+	var proxy = GetComponent(ProxyEnvironmentGenerator) as ProxyEnvironmentGenerator;
+	if (proxy == null) {
+		Debug.LogError("EnvGenScript: unable to find first player proxy");
+	}
+	proxy.UpdateState(padsStates, positions);
+	
+	if (singlePlayerMode) {
+		var secondPlayer = gameManager.GetEnemy();
+		if (secondPlayer == null) {
+			Debug.LogError("EnvGenScript: unable to find second player");
+		} else {
+			var secondProxy = secondPlayer.GetComponent(ProxyEnvironmentGenerator) as ProxyEnvironmentGenerator;
+			if (secondProxy == null) {
+				Debug.LogError("EnvGenScript: unable to find second player proxy");
+			} else {
+				secondProxy.CopyPrefabs(pathPrefabs, obstaclesPrefabs);
+				secondProxy.Init();
+				secondProxy.UpdateState(padsStates, positions);
+			}
+		}
+	} else {
+		var data: double[] = PathStateRaw.Pack(padsStates, positions);
+		
+		var clientserver = GameObject.Find("AllJoynClientServer") as AllJoynClientServer;
+		if (clientserver == null) {
+			Debug.LogError("EnvGenScript: unable to find second player proxy");
+		}
+		
+		clientserver.UpdateState(data);
+	}
 }
 
 // Wygenerowanie przeszkod na kladce
-function GenerateObstacles(pad: PathPad) {
+function GenerateObstacles(pad: PathPad) : ObstacleState[] {
+	var obstacles: ObstacleState[];
 	var padWidth = pad.Prefab.transform.lossyScale.x;
 	var padHeight = pad.Prefab.transform.lossyScale.y;
 	var padLength = pad.Prefab.transform.lossyScale.z;
@@ -244,6 +264,8 @@ function GenerateObstacles(pad: PathPad) {
 	var obsLength: float;
 	var translation: Vector3;
 	var position: Vector3;
+	
+	obstacles = new ObstacleState[obstaclesPerPad];
 	for (var i = 0; i < obstaclesPerPad; i++) {
 		j = Random.Range(0, obstaclesPrefabs.Length);
 		obstaclePref = obstaclesPrefabs[j];
@@ -259,7 +281,17 @@ function GenerateObstacles(pad: PathPad) {
 		translation = pad.Rotation * translation;
 		position = pad.Position + translation;
 		
-		Instantiate(obstaclePref, position, pad.Rotation);
 		pad.Obstacles.Add(new Obstacle(position, pad.Rotation, obstaclePref, pad.Prefab));
+		obstacles[i] = ObstacleState(j, position);
 	}
+	
+	return obstacles;
+}
+
+function GetPathPrefabs() : Transform[] {
+	return pathPrefabs;
+}
+
+function GetObstaclesPrefabs() : Transform[] {
+	return obstaclesPrefabs;
 }

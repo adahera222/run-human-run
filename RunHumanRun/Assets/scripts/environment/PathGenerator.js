@@ -79,11 +79,11 @@ function Update () {
 }
 
 // Wygenerowanie sciezki o zadanej dlugosci
-function GeneratePath(count: int): Vector3[] {
+function GeneratePath(count: int, turnsAvailable: boolean): Vector3[] {
 	var positions = new Vector3[count];
 	
 	for (var i = 0; i < count; i++) {
-		if (turning == TurnState.Straight && Random.value < turnProb) {
+		if (turning == TurnState.Straight && Random.value < turnProb && turnsAvailable) {
 			turnsLeft = Random.Range(minTurnLength, maxTurnLength + 1);
 			turnSharpness = Random.Range(minTurnSharpness, maxTurnSharpness);
 			turning = (Random.value < 0.5) ? TurnState.Left : TurnState.Right;
@@ -135,12 +135,16 @@ function GenerateInitialPath(): Vector3[] {
 		Debug.LogError("DeltaDot <= 0.0");
 	}
 	
-	currentPosition = transform.position;
-	currentRotation = transform.rotation;
+	var gameManagerObj = GameObject.Find("GameManager");
+	var gameManager = gameManagerObj.GetComponent("GameManager") as GameManager;
+	var zombie = gameManager.GetZombie();
+	currentPosition = zombie.transform.position;
+	currentRotation = zombie.transform.rotation;
+	var playersDist = (currentPosition - transform.position).magnitude;
 	
-	var neededSegments: int = initialPathLength / deltaDot;
+	var neededSegments: int = (playersDist + initialPathLength) / deltaDot;
 	
-	return GeneratePath(neededSegments);
+	return GeneratePath(neededSegments, false);
 }
 
 // Sprawdzenie, czy kat pomiedzy dwoma punktami sciezki spelnia ograniczenia

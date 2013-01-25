@@ -37,28 +37,40 @@
     <Reference Include="System.XML" />
 	<Reference Include="System.Core" />
 	<Reference Include="UnityEngine">
-	  <HintPath>C:/Program Files (x86)/Unity/Editor/Data/Managed/UnityEngine.dll</HintPath>
+	  <HintPath>C:/Program Files/Unity/Editor/Data/Managed/UnityEngine.dll</HintPath>
 	</Reference>
 	<Reference Include="UnityEditor">
-	  <HintPath>C:/Program Files (x86)/Unity/Editor/Data/Managed/UnityEditor.dll</HintPath>
+	  <HintPath>C:/Program Files/Unity/Editor/Data/Managed/UnityEditor.dll</HintPath>
 	</Reference>
   </ItemGroup>
   <ItemGroup>
      <Compile Include="Assets\scripts\camera\CameraManagerScript.js" />
      <Compile Include="Assets\scripts\camera\CameraMoveScript.js" />
      <Compile Include="Assets\scripts\camera\ObservatorCameraScript.js" />
+     <Compile Include="Assets\scripts\connection\ProxyEnvironmentGenerator.js" />
      <Compile Include="Assets\scripts\environment\EnvironmentGenerationScript.js" />
      <Compile Include="Assets\scripts\environment\ObstacleCollisionScript.js" />
      <Compile Include="Assets\scripts\environment\PathGenerator.js" />
      <Compile Include="Assets\scripts\gui\GameOverGui.js" />
      <Compile Include="Assets\scripts\gui\GuiInfoHud.js" />
+     <Compile Include="Assets\scripts\gui\MultiplayerSettingsGui.js" />
      <Compile Include="Assets\scripts\gui\StartMenuGui.js" />
+     <Compile Include="Assets\scripts\misc\GameManager.js" />
      <Compile Include="Assets\scripts\misc\GameOver.js" />
+     <Compile Include="Assets\scripts\misc\MultiPlayerSettings.js" />
      <Compile Include="Assets\scripts\misc\StartMenu.js" />
      <Compile Include="Assets\scripts\player\MobileInputController.js" />
      <Compile Include="Assets\scripts\player\PlayerMoveScript.js" />
      <Compile Include="Assets\scripts\player\ThirdPersonPlayerAnimation.js" />
      <Compile Include="Assets\scripts\player\ThirdPersonStatus.js" />
+     <None Include="Assets\Plugins\Android\AndroidManifest.xml" />
+ <Reference Include="alljoyn_unity">
+ <HintPath>Assets\Plugins\alljoyn_unity.dll</HintPath>
+ </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="Assembly-CSharp-firstpass-vs.csproj">
+      <Project>{ECCA33D7-8254-0189-EB9E-8217FAAA91F2}</Project>      <Name>Assembly-CSharp-firstpass-vs</Name>    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

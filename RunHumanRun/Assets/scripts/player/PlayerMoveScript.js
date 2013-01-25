@@ -15,11 +15,6 @@ var targetPoints = new List.<Vector3>();
 // czy maja byc rysowane w scenie linie ulatwiajace debugowanie
 var debugDraw = true;
 
-// liczba punktow trasy, do ktorych gracz jeszcze nie doszedl,
-// a ktore chcialby znac
-private var knownPathPointsCount = 10;
-
-
 // RUCH WZDLUZ TRASY
 
 // poczatkowy kierunek, w ktorym zwrocony jest gracz
@@ -122,9 +117,6 @@ function Update () {
 	Move(moveBonus);
 	playerStatus.AddPoints(Time.deltaTime);
 	playerStatus.AddBonusPoints(moveBonus);
-	if (targetPoints.Count < knownPathPointsCount) {
-		SendMessage("SendNextPoints");
-	}
 }
 
 // Aktualizacja listy kolejnych punktow sciezki
