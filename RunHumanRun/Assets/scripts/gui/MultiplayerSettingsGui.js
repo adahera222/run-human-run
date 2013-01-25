@@ -44,6 +44,10 @@ var playerButtonWidth = 100;
 var maxConnectTime = 4.0;
 private var currentConnectTime = 0.0;
 
+private var clientServer: AllJoynClientServer;
+private var buttonSize = 75;
+
+
 function OnGUI () {
 	InitValues();
 	
@@ -89,13 +93,12 @@ function InitState () {
 			settingsState = MultiplayerState.FindGameState;
 			selectedPlayer = "";
 			
-			
 			//var multiplayerSettings : MultiPlayerSettings = GetComponent(MultiPlayerSettings);
-			var allJoynClientServerObject : GameObject = GameObject.Find("AllJoynClientServer");
-			var allJoynClientServer : AllJoynClientServer = allJoynClientServerObject.GetComponent("AllJoynClientServer") as AllJoynClientServer;
-			if (allJoynClientServer == null)
+			var clientServerObject = GameObject.Find("AllJoynClientServer");
+			clientServer = clientServerObject.GetComponent("AllJoynClientServer") as AllJoynClientServer;
+			if (clientServer == null)
 				Debug.LogError("allJoynClientServer is null in MultiplayerSettings");
-			allJoynClientServer.Init(playerNick);
+			clientServer.Init(playerNick);
 			//multiplayerSettings.InitConnections(playerNick);
 		} else {
 			displayMsgTimeLeft = displayMsgTime;
@@ -109,6 +112,58 @@ function InitState () {
 }
 
 function FindGameState () {
+	GUI.skin = null;
+	if (clientServer.GetChatText() != null) {
+		GUI.TextArea(new Rect (0, 0, Screen.width, (Screen.height / 2)), clientServer.GetChatText());
+	}
+	var i = 0;
+	var xStart = (Screen.height / 2)+10+ ((i++) * buttonSize);
+	var isAllJoynStarted = clientServer.isAllJoynStarted();
+	
+	if (isAllJoynStarted) {
+		if (GUI.Button(new Rect(0,xStart,(Screen.width)/3, buttonSize), "STOP ALLJOYN")) {	
+			clientServer.CloseDown();
+		}
+	}
+	
+	if (clientServer.HasJoinedSession() != null) {
+		if (GUI.Button(new Rect(((Screen.width)/3),xStart,(Screen.width)/3, buttonSize),
+			"Leave \n"+ clientServer.GetConnectedPlayerName())) {
+			clientServer.LeaveSession();
+		}
+	}
+	
+	if (!isAllJoynStarted) {
+		if (GUI.Button(new Rect(((Screen.width)/3)*2,xStart,(Screen.width)/3, buttonSize), "START ALLJOYN")) {	
+			clientServer.StartUp();
+		}
+	}
+	
+	for (var nameObj in clientServer.GetSessions()) {
+		var name = nameObj as String;
+		xStart = (Screen.height / 2)+10+((i++)*buttonSize);
+		var nick = clientServer.FoundNameToNick(name) as String;
+		if (GUI.Button(new Rect(10,xStart,(Screen.width-20), buttonSize), nick)) {	
+			clientServer.JoinSession(name);
+		}
+	}
+	
+	if (clientServer.IsDuringGame()) {
+		Application.LoadLevel("sc1");
+	}
+	
+	/*
+	msgText = GUI.TextField(new Rect (0, Screen.height-buttonSize, (Screen.width/4) * 3, buttonSize), msgText);
+	if (GUI.Button(new Rect(Screen.width - (Screen.width/4),Screen.height-buttonSize, (Screen.width/4), buttonSize),"Send"))
+	{	
+		ArrayList points = new ArrayList();
+		points.Add(new Vector3(1.0f, 2.0f, 3.0f));
+		points.Add(new Vector3(-1.0f, 0.0f, 200.0f));
+		points.Add(new Vector3(-93.2f, 23.99f, 200.99f));
+		basicChat.SendVector(points);
+		//basicChat.SendTheMsg(msgText);
+	}
+	*/
 	/*
 	var nextItemPosY = 110 + titleHeight;
 	GUI.Label(Rect((Screen.width - playersTex.width) / 2, nextItemPosY, playersTex.width, playersTex.height*2), playersTex);

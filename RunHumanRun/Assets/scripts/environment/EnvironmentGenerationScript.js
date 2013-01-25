@@ -102,7 +102,7 @@ function Start () {
 	
 	CheckPrefabs();
 	singlePlayerMode = gameManager.IsSinglePlayerGame();
-	meGenerating = (gameObject == gameManager.GetHuman());
+	meGenerating = gameManager.IsObjGenerating(gameObject);
 	
 	var proxy = GetComponent("ProxyEnvironmentGenerator") as ProxyEnvironmentGenerator;
 	proxy.CopyPrefabs(pathPrefabs, obstaclesPrefabs);
@@ -241,12 +241,14 @@ function SendData(positions: Vector3[], padsStates: PadState[]) {
 	} else {
 		var data: double[] = PathStateRaw.Pack(padsStates, positions);
 		
-		var clientserver = GameObject.Find("AllJoynClientServer") as AllJoynClientServer;
-		if (clientserver == null) {
+		var clientServerObj = GameObject.Find("AllJoynClientServer");
+		if (clientServerObj == null) {
 			Debug.LogError("EnvGenScript: unable to find second player proxy");
+		} else {
+			var clientServer = clientServerObj.GetComponent("AllJoynClientServer") as AllJoynClientServer;
+			Debug.Log("CS: " + clientServer);
+			clientServer.UpdateState(data);
 		}
-		
-		clientserver.UpdateState(data);
 	}
 }
 

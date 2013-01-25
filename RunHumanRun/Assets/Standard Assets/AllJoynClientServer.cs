@@ -30,13 +30,20 @@ namespace client_server
 		private bool isWorking = false;
 		private string playerNick = "";
 		
-		private static int BUTTON_SIZE = 75;
 		private long spamCount = 0;
 		
 		private bool spamMessages = false;
 		
 		private int playerNr;
 		
+		private int BUTTON_SIZE = 75;
+		
+		public string GetChatText()
+		{
+			return BasicChat.chatText;	
+		}
+		
+		/*
 		void OnGUI ()
 		{
 			if (!isWorking)
@@ -60,6 +67,7 @@ namespace client_server
 					"Leave \n"+BasicChat.currentJoinedSession.Substring(BasicChat.currentJoinedSession.LastIndexOf("."))))
 				{	
 					basicChat.LeaveSession();
+					playerNr = 1;
 				}
 			}
 			
@@ -72,7 +80,7 @@ namespace client_server
 			
 			foreach(string name in BasicChat.sFoundName){
 				xStart = (Screen.height / 2)+10+((i++)*BUTTON_SIZE);
-				if(GUI.Button(new Rect(10,xStart,(Screen.width-20), BUTTON_SIZE),name.Substring(name.LastIndexOf("."))))
+				if(GUI.Button(new Rect(10,xStart,(Screen.width-20), BUTTON_SIZE),basicChat.RetrievePlayerNick(name)))//.Substring(name.LastIndexOf("."))))
 				{	
 					basicChat.JoinSession(name);
 					playerNr = 2;
@@ -97,7 +105,7 @@ namespace client_server
 					spamCount = 0;
 				}
 			}
-		}
+		}*/
 		
 		// Use this for initialization
 		void Start()
@@ -129,13 +137,83 @@ namespace client_server
 			basicChat = new BasicChat(playerNick);
 		}
 		
-		public void UpdateState(double[] state)
+		public bool IsDuringGame()
 		{
-			Debug.Log ("AllJoynClientServer: SHOULD sent data to P2");	
+			return basicChat.IsDuringGame();
 		}
 		
-		public int GetPlayerNr() {
+		public void SetTestStart()
+		{
+			basicChat.GameStarted();	
+		}
+		
+		public void UpdateState(double[] state)
+		{
+			Debug.Log ("AllJoynClientServer: SHOULD sent data to P2");
+			Debug.Log ("STATE: " + state);
+		}
+		
+		public int GetPlayerNr()
+		{
 			return playerNr;	
+		}
+		
+		public bool isAllJoynStarted()
+		{
+			return BasicChat.AllJoynStarted;
+		}
+		
+		public void StartUp()
+		{
+			basicChat.StartUp();
+		}
+		
+		public void JoinSession(string session)
+		{
+			basicChat.JoinSession(session);
+			playerNr = 2;
+		}
+		
+		public void LeaveSession()
+		{
+			basicChat.LeaveSession();
+			playerNr = 1;
+		}
+		
+		public void CloseDown()
+		{
+			basicChat.CloseDown();	
+		}
+		
+		public bool HasJoinedSession()
+		{
+			return BasicChat.currentJoinedSession != null;
+		}
+		
+		public string GetConnectedPlayerName()
+		{
+			return basicChat.GetConnectedPlayerNick();
+		}
+		
+		public ArrayList GetPlayersNicks()
+		{
+			ArrayList nicks = new ArrayList();
+			foreach (string name in BasicChat.sFoundName)
+			{
+				nicks.Add(basicChat.RetrievePlayerNick(name));
+			}
+			
+			return nicks;
+		}
+		
+		public ArrayList GetSessions()
+		{
+			return BasicChat.sFoundName;
+		}
+		
+		public string FoundNameToNick(string foundName)
+		{
+			return basicChat.RetrievePlayerNick(foundName);	
 		}
 	
 		BasicChat basicChat;

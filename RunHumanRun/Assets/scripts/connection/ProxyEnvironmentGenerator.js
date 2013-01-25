@@ -167,7 +167,8 @@ function Init() {
 	if (!gameManager) {
 		Debug.LogError("Proxy Env Gen: unable to find GameManager in Awake()");
 	}
-	meGenerating = (gameObject == gameManager.GetHuman());
+	meGenerating = gameManager.IsObjGenerating(gameObject);
+	Debug.Log("MG: " + meGenerating);
 }
 
 function Update() {
@@ -223,7 +224,7 @@ function UpdateState(pads: PadState[], positions: Vector3[]) {
 function MoveToCorrectInitIndexes(positions: Vector3[]) {
 	var humanZPos = gameManager.GetHuman().transform.position.z;
 	UpdatePathIndexes();
-	var lastSentPoint = pads[sentPadIndex].Points[sentPointIndex];
+	lastSentPoint = pads[sentPadIndex].Points[sentPointIndex];
 	while (lastSentPoint.z < humanZPos) {
 		UpdatePathIndexes();
 		lastSentPoint = pads[sentPadIndex].Points[sentPointIndex];

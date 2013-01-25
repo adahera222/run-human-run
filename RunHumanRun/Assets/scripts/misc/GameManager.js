@@ -42,6 +42,7 @@ function NextRound() {
 	roundNr += 1;
 }
 
+// uzyteczne jedynie w trybie multi
 function AmIHuman() : boolean {
 	return roundNr % 2 == playerNr % 2;
 }
@@ -64,4 +65,13 @@ function GetEnemy() : GameObject {
 
 function IsSinglePlayerGame() : boolean {
 	return isSinglePlayer;
+}
+
+function IsObjGenerating(obj: GameObject) : boolean {
+	if (isSinglePlayer) {
+		return obj == GetHuman();
+	} else {
+		var isThisPlayerGenerating = AmIHuman();
+		return isThisPlayerGenerating && obj == GetHuman();
+	}
 }

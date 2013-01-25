@@ -23,7 +23,7 @@ using System.Collections;
 
 namespace basic_clientserver
 {
-	class BasicChat
+	class BasicChat : MonoBehaviour
 	{
 		private const string INTERFACE_NAME = "org.alljoyn.bus.chat";
 		private const string SERVICE_NAME = "org.alljoyn.bus.chat";
@@ -53,6 +53,9 @@ namespace basic_clientserver
 		public static bool AllJoynStarted = false;
 		
 		private string playerNick = "";
+		private string connectedPlayerNick = "";
+		
+		private bool isDuringGame = false;
        
 		class TestBusObject : AllJoyn.BusObject
 		{
@@ -156,6 +159,13 @@ namespace basic_clientserver
 
 		class MySessionPortListener : AllJoyn.SessionPortListener
 		{
+			private BasicChat chat;
+			
+			public MySessionPortListener(BasicChat chat)
+			{
+				this.chat = chat;
+			}
+			
 			protected override bool AcceptSessionJoiner(ushort sessionPort, string joiner, AllJoyn.SessionOpts opts)
 			{
 			
@@ -180,8 +190,10 @@ namespace basic_clientserver
 				chatText = "Session Joined!!!!!! \n" + chatText;
 				currentSessionId = sessionId;
 				currentJoinedSession = myAdvertisedName;
+				chat.SetConnectedPlayerNick(joiner);
+				chat.GameStarted();
 				if(sessionListener == null) {
-					sessionListener = new MySessionListener();
+					sessionListener = new MySessionListener(chat);
 					msgBus.SetSessionListener(sessionListener, sessionId);
 				}
 			}
@@ -189,8 +201,16 @@ namespace basic_clientserver
 		
 		class MySessionListener : AllJoyn.SessionListener
 		{
+			private BasicChat chat;
+			
+			public MySessionListener(BasicChat chat)
+			{
+				this.chat = chat;	
+			}
 			protected override void	SessionLost(uint sessionId)
 			{
+				chat.SetConnectedPlayerNick("");
+				chat.GameEnded();
 				chatText = "SessionLost ("+sessionId+") \n" + chatText;	
 				Debug.Log("SessionLost ("+sessionId+")");
 			}
@@ -214,6 +234,42 @@ namespace basic_clientserver
 			StartUp();
 		}
 		
+		public bool IsDuringGame()
+		{
+			return isDuringGame;
+		}
+		
+		public void GameStarted()
+		{
+			isDuringGame	= true;
+		}
+		
+		public void GameEnded()
+		{
+			isDuringGame = false;	
+		}
+		
+		public string RetrievePlayerNick(string advertisedName)
+			{
+			int delimiterIndex = advertisedName.IndexOf("._") + 2 +
+												msgBus.GlobalGUIDString.Length;
+			return advertisedName.Substring(delimiterIndex);
+		}
+		
+		public void SetConnectedPlayerNick(string nick)
+		{
+			connectedPlayerNick = nick;
+		}
+		
+		public string GetConnectedPlayerNick()
+		{
+			return connectedPlayerNick;
+		}
+		
+		public void Start()
+		{
+			DontDestroyOnLoad(this);
+		}
 		
 		public void StartUp()
 		{
@@ -298,7 +354,7 @@ namespace basic_clientserver
 					}
 				}
 				
-				myAdvertisedName = SERVICE_NAME+"._" + msgBus.GlobalGUIDString +playerNick;
+				myAdvertisedName = SERVICE_NAME+ "._" + msgBus.GlobalGUIDString + playerNick;
 				
 				AllJoyn.InterfaceDescription.Member chatMember = testIntf.GetMember("chat");
 				status = msgBus.RegisterSignalHandler(this.ChatSignalHandler, chatMember, null);
@@ -368,7 +424,7 @@ namespace basic_clientserver
 			{
 			
 				ushort sessionPort = SERVICE_PORT;
-				sessionPortListener = new MySessionPortListener();
+				sessionPortListener = new MySessionPortListener(this);
 				status = msgBus.BindSessionPort(ref sessionPort, opts, sessionPortListener);
 				if(!status || sessionPort != SERVICE_PORT)
 				{
@@ -426,6 +482,7 @@ namespace basic_clientserver
 				testObj.SendChatSignal(msg);
 			}
 		}
+		
 		// NOWA FUNKCJA
 		public void SendVector(ArrayList points) {
 			Debug.Log ("SEND VECTOR");
@@ -447,7 +504,7 @@ namespace basic_clientserver
 					Debug.Log("SetSessionListener status(" + status.ToString() + ")");
 				}
 			}
-			sessionListener = new MySessionListener();
+			sessionListener = new MySessionListener(this);
 			chatText = "About to call JoinSession (Session=" + session + ")\n" + chatText;
 			Debug.Log("About to call JoinSession (Session=" + session + ")");
 			status = msgBus.JoinSession(session, SERVICE_PORT, sessionListener, out currentSessionId, opts);

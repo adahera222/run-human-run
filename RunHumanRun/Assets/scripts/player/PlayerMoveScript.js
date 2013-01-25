@@ -87,6 +87,10 @@ function Start () {
 }
 
 function Update () {
+	if (!HasAnyTarget()) {
+		return;
+	}
+
 	if (IsJumping() && IsTouchingGround()) {
 		isJumping = false;
 		SendMessage("DidLand", SendMessageOptions.DontRequireReceiver);
@@ -117,6 +121,10 @@ function Update () {
 	Move(moveBonus);
 	playerStatus.AddPoints(Time.deltaTime);
 	playerStatus.AddBonusPoints(moveBonus);
+}
+
+function HasAnyTarget() : boolean {
+	return targetPoints.Count > 1;
 }
 
 // Aktualizacja listy kolejnych punktow sciezki
