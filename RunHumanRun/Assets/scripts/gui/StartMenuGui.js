@@ -33,7 +33,7 @@ function OnGUI()
 	var nextItemPosY = 110 + titleHeight;
 	if (GUI.Button(Rect((Screen.width / 2 - buttonSingleTex.width), nextItemPosY, buttonSingleTex.width*2, buttonSingleTex.height*2), buttonSingleTex)) {
 		isLoading = true;
-		Application.LoadLevel("sc1");
+		Application.LoadLevel("Chase");
 	}
 	
 	nextItemPosY += 100;

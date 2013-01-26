@@ -47,6 +47,8 @@ private var currentConnectTime = 0.0;
 private var clientServer: AllJoynClientServer;
 private var buttonSize = 75;
 
+private var gameManager: GameManager;
+
 
 function OnGUI () {
 	InitValues();
@@ -64,6 +66,7 @@ function OnGUI () {
 }
 
 function InitValues () {
+	DontDestroyOnLoad(gameObject);
 	if (gSkin) {
 		GUI.skin = gSkin;
 	}
@@ -93,13 +96,11 @@ function InitState () {
 			settingsState = MultiplayerState.FindGameState;
 			selectedPlayer = "";
 			
-			//var multiplayerSettings : MultiPlayerSettings = GetComponent(MultiPlayerSettings);
 			var clientServerObject = GameObject.Find("AllJoynClientServer");
 			clientServer = clientServerObject.GetComponent("AllJoynClientServer") as AllJoynClientServer;
 			if (clientServer == null)
 				Debug.LogError("allJoynClientServer is null in MultiplayerSettings");
 			clientServer.Init(playerNick);
-			//multiplayerSettings.InitConnections(playerNick);
 		} else {
 			displayMsgTimeLeft = displayMsgTime;
 		}
@@ -113,6 +114,13 @@ function InitState () {
 
 function FindGameState () {
 	GUI.skin = null;
+	
+	if (clientServer.IsDuringGame()) {
+		Application.LoadLevel("Chase");
+		settingsState = MultiplayerState.ConnectState;
+		return;
+	}
+	
 	if (clientServer.GetChatText() != null) {
 		GUI.TextArea(new Rect (0, 0, Screen.width, (Screen.height / 2)), clientServer.GetChatText());
 	}
@@ -148,10 +156,6 @@ function FindGameState () {
 		}
 	}
 	
-	if (clientServer.IsDuringGame()) {
-		Application.LoadLevel("sc1");
-	}
-	
 	/*
 	msgText = GUI.TextField(new Rect (0, Screen.height-buttonSize, (Screen.width/4) * 3, buttonSize), msgText);
 	if (GUI.Button(new Rect(Screen.width - (Screen.width/4),Screen.height-buttonSize, (Screen.width/4), buttonSize),"Send"))
@@ -183,7 +187,17 @@ function FindGameState () {
 }
 
 function ConnectState () {
-	if (currentConnectTime < maxConnectTime) {
+	GUI.skin = null;
+	
+	if (gameManager == null) {
+		var gameManagerObj = GameObject.Find("GameManager");
+		if (gameManagerObj != null) {
+			gameManager = gameManagerObj.GetComponent("GameManager") as GameManager;
+		}
+	}
+	var logText = (gameManager != null) ? gameManager.GetLog() : "";
+	GUI.TextArea(new Rect (0, 0, Screen.width, (Screen.height / 2)), logText);
+/*	if (currentConnectTime < maxConnectTime) {
 		var connectingMsg = "Connecting to\n" + selectedPlayer;
 		GUI.Box(Rect(Screen.width / 4, Screen.height / 2 - 50, Screen.width / 2, 100), connectingMsg);
 	} else if (currentConnectTime < 2 * maxConnectTime) {
@@ -194,7 +208,7 @@ function ConnectState () {
 		settingsState = MultiplayerState.FindGameState;
 	}
 	
-	currentConnectTime += Time.deltaTime;
+	currentConnectTime += Time.deltaTime;*/
 }
 
 function ShowBackground () {

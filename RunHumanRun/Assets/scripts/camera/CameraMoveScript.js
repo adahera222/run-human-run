@@ -1,7 +1,7 @@
 #pragma strict
 
 
-var player: Transform;
+private var player: Transform;
 
 var height: float;
 private var offset: Vector3;
@@ -20,7 +20,13 @@ private var angle = 0.0;
 
 private var hasJustLanded = false;
 
+private var gameManager: GameManager;
+
+
 function Start () {
+	var gameManagerObj = GameObject.Find("GameManager");
+	gameManager = gameManagerObj.GetComponent("GameManager") as GameManager;
+	player = gameManager.GetPlayer().transform;
 	offset = Vector3(0.0, height + 2.0, -3.0);//0.5);
 	transform.position = player.position + offset;
 	transform.rotation = player.rotation;

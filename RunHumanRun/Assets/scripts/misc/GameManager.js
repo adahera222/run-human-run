@@ -11,6 +11,10 @@ private var roundNr: int;
 // czy jest to gra single player
 private var isSinglePlayer: boolean;
 
+private var clientServer: AllJoynClientServer;
+
+private var log = "";
+
 function Awake() {
 	var clientServerObj = GameObject.Find("AllJoynClientServer");
 	if (clientServerObj == null) {
@@ -18,16 +22,33 @@ function Awake() {
 		playerNr = 1;
 	} else {
 		isSinglePlayer = false;
-		var clientServer = clientServerObj.GetComponent("AllJoynClientServer") as AllJoynClientServer;
+		clientServer = clientServerObj.GetComponent("AllJoynClientServer") as AllJoynClientServer;
 		playerNr = clientServer.GetPlayerNr();
 	}
 	StartGame();
 }
 
 function Start () {
+	log = "Player pos: " + GetPlayer().transform.position + "\n" + log;
 }
 
+function GetLog() {
+	return log;
+}
+
+// do debugowania
 function Update () {
+	if (!IsSinglePlayerGame() && clientServer.HasEnvData())
+	{
+		var data = clientServer.GetEnvData();
+		var tmp = "";
+		for (var i = 0; i < 15; i ++) {
+			tmp = tmp + "d[" + i + "]=" + data[i] + " | ";
+			if (i % 5 == 4)
+				log = tmp + "\n" + log;
+		}
+		GetFirstProxy().UpdateState(data);
+	}
 }
 
 function GetPlayerNr(nr: int) : int {
@@ -74,4 +95,12 @@ function IsObjGenerating(obj: GameObject) : boolean {
 		var isThisPlayerGenerating = AmIHuman();
 		return isThisPlayerGenerating && obj == GetHuman();
 	}
+}
+
+function IsProxyObjGenerating(obj: GameObject) : boolean {
+	return obj == GetHuman();
+}
+
+function GetFirstProxy() : ProxyEnvironmentGenerator {
+	return GetHuman().GetComponent("ProxyEnvironmentGenerator") as ProxyEnvironmentGenerator;
 }

@@ -224,6 +224,7 @@ function SendData(positions: Vector3[], padsStates: PadState[]) {
 	}
 	proxy.UpdateState(padsStates, positions);
 	
+	
 	if (singlePlayerMode) {
 		var secondPlayer = gameManager.GetEnemy();
 		if (secondPlayer == null) {
@@ -247,7 +248,7 @@ function SendData(positions: Vector3[], padsStates: PadState[]) {
 		} else {
 			var clientServer = clientServerObj.GetComponent("AllJoynClientServer") as AllJoynClientServer;
 			Debug.Log("CS: " + clientServer);
-			clientServer.UpdateState(data);
+			clientServer.SendUpdateState(data);
 		}
 	}
 }

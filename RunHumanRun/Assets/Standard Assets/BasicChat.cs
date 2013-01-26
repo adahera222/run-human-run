@@ -20,6 +20,7 @@ using UnityEngine;
 using AllJoynUnity;
 using System.Runtime.InteropServices;
 using System.Collections;
+using System.Threading;
 
 namespace basic_clientserver
 {
@@ -56,11 +57,14 @@ namespace basic_clientserver
 		private string connectedPlayerNick = "";
 		
 		private bool isDuringGame = false;
+		
+		private double[] envBuffer = new double[0];
+		private static Mutex mutex = new Mutex();
        
 		class TestBusObject : AllJoyn.BusObject
 		{
 			private AllJoyn.InterfaceDescription.Member chatMember;
-			private AllJoyn.InterfaceDescription.Member vectorMember; // NOWE
+			private AllJoyn.InterfaceDescription.Member vectorMember;
 			
 			public TestBusObject(AllJoyn.BusAttachment bus, string path) : base(path, false)
 			{
@@ -74,7 +78,7 @@ namespace basic_clientserver
 				}
 				
 				chatMember = exampleIntf.GetMember("chat");
-				vectorMember = exampleIntf.GetMember("vector"); // NOWE
+				vectorMember = exampleIntf.GetMember("vector");
 			}
 
 			protected override void OnObjectRegistered ()
@@ -93,25 +97,13 @@ namespace basic_clientserver
 				}
 			}
 			
-			// NOWA FUNKCJA
-			public void SendVectorSignal(ArrayList points) {
-				uint doublesToSend = 3 * (uint)points.Count;
-				AllJoyn.MsgArgs payload = new AllJoyn.MsgArgs(doublesToSend);
-				for (int j = 0; j < points.Count; j++)
-				{
-					Debug.Log("Send point " + (Vector3)points[j]);
-				}
-				
-				for (int i = 0; i < points.Count; i++)
-				{
-					Vector3 point = (Vector3)points[i];
-					payload[3 * i].Set((double)point.x);
-					payload[3 * i + 1].Set((double)point.y);
-					payload[3 * i + 2].Set((double)point.z);
-				}
+			public void SendArraySignal(double[] data) {
+				AllJoyn.MsgArgs payload = new AllJoyn.MsgArgs((uint)1);
+				payload[0].Set((double[])data);
 				AllJoyn.QStatus status = Signal(null, currentSessionId, vectorMember, payload, 0, 64);
 				if(!status) {
 					Debug.Log("Chat failed to send vector signal: "+status.ToString());	
+					chatText += "Chat failed to send vector signal: "+status.ToString() + "\n" + chatText;
 				}
 			}
 		}
@@ -271,6 +263,43 @@ namespace basic_clientserver
 			DontDestroyOnLoad(this);
 		}
 		
+		public double[] GetEnvData()
+		{
+			mutex.WaitOne();
+			double[] data = envBuffer;
+			envBuffer = new double[0];
+			mutex.ReleaseMutex();
+			
+			return data;
+		}
+		
+		public void AddEnvData(double[] newData)
+		{
+			mutex.WaitOne();
+			
+			double[] tmpBuffer = new double[envBuffer.Length + newData.Length];
+			for (int i = 0; i < envBuffer.Length; i++)
+			{
+				tmpBuffer[i] = envBuffer[i];
+			}
+			for (int i = envBuffer.Length, j = 0; j < newData.Length; i++, j++)
+			{
+				tmpBuffer[i] = newData[j];
+			}
+			envBuffer = tmpBuffer;
+			
+			mutex.ReleaseMutex();
+		}
+		
+		public bool HasEnvData()
+		{
+			mutex.WaitOne();
+			int envLength = envBuffer.Length;
+			mutex.ReleaseMutex();
+			
+			return envLength > 0;	
+		}
+		
 		public void StartUp()
 		{
 			chatText = "Starting AllJoyn\n\n\n" + chatText;
@@ -289,7 +318,7 @@ namespace basic_clientserver
 					chatText = "Chat Interface Created.\n" + chatText;
 					Debug.Log("Chat Interface Created.");
 					testIntf.AddSignal("chat", "s", "msg", 0);
-					testIntf.AddSignal ("vector", "ad", "points", 0); // NOWE
+					testIntf.AddSignal ("vector", "ad", "points", 0);
 					testIntf.Activate();
 				}
 				else
@@ -367,7 +396,7 @@ namespace basic_clientserver
 					chatText ="Chat add signal handler " + status + "\n" + chatText;
 					Debug.Log("Chat add signal handler " + status);
 				}
-				// NOWY BLOK
+				
 				AllJoyn.InterfaceDescription.Member vectorMember = testIntf.GetMember ("vector");
 				status = msgBus.RegisterSignalHandler(this.VectorSignalHandler, vectorMember, null);
 				if(!status)
@@ -391,7 +420,7 @@ namespace basic_clientserver
 					Debug.Log("Chat add Match " + status.ToString());
 				}
 				
-				// NOWY BLOK
+				
 				status = msgBus.AddMatch("type='signal',member='vector'");
 				if(!status)
 				{
@@ -461,20 +490,15 @@ namespace basic_clientserver
 			Debug.Log("Client Chat msg - : "+ message[0]);
 			chatText = "Client Chat msg: ("+message[0]+ ")\n" + chatText;
 		}
-		// NOWA FUNKCJA
+		
 		public void VectorSignalHandler(AllJoyn.InterfaceDescription.Member member, string srcPath, AllJoyn.Message message)
 		{
 			Debug.Log ("VectorSignalHandler: new message");
-			double[] d = (double[])message[0];
-			//double d1 = (double)message[1];
-			//double d2 = (double)message[2];
-			//Debug.Log("Client Chat vector msg - : "+d0+""+d1+""+d2);
-			//chatText = "Client Chat vector msg: ("+d0+""+d1+""+d2+ ")\n" + chatText;
-			for (int i = 0; i < d.Length; i++)
-			{
-				Debug.Log("Client Chat vector msg - : msg["+i+"] = "+d[i]);
-				chatText = "Client Chat vector msg - : msg["+i+"] = "+d[i]+"\n" + chatText;
-			}
+			
+			Debug.Log ("AllJoynClientServer: ReceivedUpdateState");
+			double[] state = (double[])message[0];
+			
+			AddEnvData(state);
 		}
 		
 		public void SendTheMsg(string msg) {
@@ -483,11 +507,10 @@ namespace basic_clientserver
 			}
 		}
 		
-		// NOWA FUNKCJA
-		public void SendVector(ArrayList points) {
+		public void SendDoubleArray(double[] data) {
 			Debug.Log ("SEND VECTOR");
 			if (currentSessionId != 0) {
-				testObj.SendVectorSignal(points);
+				testObj.SendArraySignal(data);
 			}
 		}
 		
@@ -597,7 +620,7 @@ namespace basic_clientserver
             	chatText = "UnregisterSignalHandler failed status(" + status.ToString() + ")\n" + chatText;
 				Debug.Log("UnregisterSignalHandler status(" + status.ToString() + ")");
 			}
-			// NOWY BLOK
+			
 			AllJoyn.InterfaceDescription.Member vectorMember = testIntf.GetMember("vector");
 			status = msgBus.UnregisterSignalHandler(this.VectorSignalHandler, vectorMember, null);
 			vectorMember = null;
