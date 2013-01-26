@@ -19,4 +19,8 @@ RunHumanRun/Temp
 *.pidb
 *.sln
 RunHumanRun/build
+RunHumanRun/obj
+*.meta
+*.suo
+*.userprefs
 ############
