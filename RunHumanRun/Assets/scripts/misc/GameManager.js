@@ -11,18 +11,18 @@ private var roundNr: int;
 // czy jest to gra single player
 private var isSinglePlayer: boolean;
 
-private var clientServer: AllJoynClientServer;
+private var clientServer: ClientServer;
 
 private var log = "";
 
 function Awake() {
-	var clientServerObj = GameObject.Find("AllJoynClientServer");
+	var clientServerObj = GameObject.Find("ClientServer");
 	if (clientServerObj == null) {
 		isSinglePlayer = true;
 		playerNr = 1;
 	} else {
 		isSinglePlayer = false;
-		clientServer = clientServerObj.GetComponent("AllJoynClientServer") as AllJoynClientServer;
+		clientServer = clientServerObj.GetComponent("ClientServer") as ClientServer;
 		playerNr = clientServer.GetPlayerNr();
 	}
 	StartGame();

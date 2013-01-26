@@ -47,6 +47,7 @@
      <Compile Include="Assets\scripts\camera\CameraManagerScript.js" />
      <Compile Include="Assets\scripts\camera\CameraMoveScript.js" />
      <Compile Include="Assets\scripts\camera\ObservatorCameraScript.js" />
+     <Compile Include="Assets\scripts\connection\PathUpdateStructs.js" />
      <Compile Include="Assets\scripts\connection\ProxyEnvironmentGenerator.js" />
      <Compile Include="Assets\scripts\environment\EnvironmentGenerationScript.js" />
      <Compile Include="Assets\scripts\environment\ObstacleCollisionScript.js" />

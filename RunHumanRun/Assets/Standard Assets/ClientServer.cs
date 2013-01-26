@@ -1,21 +1,3 @@
-//-----------------------------------------------------------------------
-// <copyright file="AllJoynClientServer.cs" company="Qualcomm Innovation Center, Inc.">
-// Copyright 2012, Qualcomm Innovation Center, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
-//-----------------------------------------------------------------------
-
 using UnityEngine;
 using AllJoynUnity;
 using basic_clientserver;
@@ -23,28 +5,23 @@ using System.Collections;
 
 namespace client_server
 {
-	public class AllJoynClientServer : MonoBehaviour
+	public class ClientServer : MonoBehaviour
 	{
 		
 		private bool isWorking = false;
 		private string playerNick = "";
-		
-		private long spamCount = 0;
-		
-		private bool spamMessages = false;
-		
-		private int playerNr;
+		// domyslnie nr gracza to 1, jak dolacza do sesji, staje sie graczem nr 2
+		private int playerNr = 1;
 		
 		public string GetChatText()
 		{
-			return BasicChat.chatText;	
+			return RHRMultiplayerHandler.chatText;	
 		}
 		
 		// Use this for initialization
 		void Start()
 		{
 			DontDestroyOnLoad(this);
-			//basicChat = new BasicChat();
 		}
 	
 		// Update is called once per frame
@@ -56,9 +33,6 @@ namespace client_server
 				basicChat.CloseDown();
 				Application.Quit();
 			}
-			if(spamMessages) {
-				basicChat.SendTheMsg("("+(spamCount++)+") Spam: "+System.DateTime.Today.Millisecond);
-			}
 		}
 		
 		public void Init(string nick)
@@ -67,7 +41,7 @@ namespace client_server
 			playerNick = nick;
 			playerNr = 1;
 			Debug.Log("Starting up AllJoyn service and client");
-			basicChat = new BasicChat(playerNick);
+			basicChat = new RHRMultiplayerHandler(playerNick);
 		}
 		
 		public bool HasEnvData()
@@ -103,7 +77,7 @@ namespace client_server
 		
 		public bool isAllJoynStarted()
 		{
-			return BasicChat.AllJoynStarted;
+			return RHRMultiplayerHandler.AllJoynStarted;
 		}
 		
 		public void StartUp()
@@ -130,7 +104,7 @@ namespace client_server
 		
 		public bool HasJoinedSession()
 		{
-			return BasicChat.currentJoinedSession != null;
+			return RHRMultiplayerHandler.currentJoinedSession != null;
 		}
 		
 		public string GetConnectedPlayerName()
@@ -141,7 +115,7 @@ namespace client_server
 		public ArrayList GetPlayersNicks()
 		{
 			ArrayList nicks = new ArrayList();
-			foreach (string name in BasicChat.sFoundName)
+			foreach (string name in RHRMultiplayerHandler.sFoundName)
 			{
 				nicks.Add(basicChat.RetrievePlayerNick(name));
 			}
@@ -151,7 +125,7 @@ namespace client_server
 		
 		public ArrayList GetSessions()
 		{
-			return BasicChat.sFoundName;
+			return RHRMultiplayerHandler.sFoundName;
 		}
 		
 		public string FoundNameToNick(string foundName)
@@ -159,6 +133,6 @@ namespace client_server
 			return basicChat.RetrievePlayerNick(foundName);	
 		}
 	
-		BasicChat basicChat;
+		RHRMultiplayerHandler basicChat;
 	}
 }

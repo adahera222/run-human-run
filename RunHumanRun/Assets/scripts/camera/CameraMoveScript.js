@@ -37,7 +37,7 @@ function ShouldMoveHead() {
 	return !playerMoveScript.IsJumping();
 }
 
-function Update () {
+function LateUpdate () {
 	transform.position = player.position;
 	transform.rotation = player.rotation;
 	
