@@ -3,9 +3,11 @@
 var initHeight = 10.0;
 var speed = 10.0;
 
+private var gameManager: GameManager;
+
 function Start () {
 	var gameManagerObj = GameObject.Find("GameManager");
-	var gameManager = gameManagerObj.GetComponent("GameManager") as GameManager;
+	gameManager = gameManagerObj.GetComponent("GameManager") as GameManager;
 	var player = gameManager.GetPlayer();
 	if (!player) {
 		Debug.LogError("Observator camera unable to find player");

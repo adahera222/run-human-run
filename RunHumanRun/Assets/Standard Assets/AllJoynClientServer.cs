@@ -26,7 +26,6 @@ namespace client_server
 	public class AllJoynClientServer : MonoBehaviour
 	{
 		
-		private string msgText = "";
 		private bool isWorking = false;
 		private string playerNick = "";
 		
@@ -36,76 +35,10 @@ namespace client_server
 		
 		private int playerNr;
 		
-		private int BUTTON_SIZE = 75;
-		
 		public string GetChatText()
 		{
 			return BasicChat.chatText;	
 		}
-		
-		/*
-		void OnGUI ()
-		{
-			if (!isWorking)
-				return;
-			
-			if(BasicChat.chatText != null){
-				GUI.TextArea(new Rect (0, 0, Screen.width, (Screen.height / 2)), BasicChat.chatText);
-			}
-			int i = 0;
-			int xStart = (Screen.height / 2)+10+((i++)*BUTTON_SIZE);
-			
-			if(BasicChat.AllJoynStarted) {
-				if(GUI.Button(new Rect(0,xStart,(Screen.width)/3, BUTTON_SIZE),"STOP ALLJOYN"))
-				{	
-					basicChat.CloseDown();
-				}
-			}
-			
-			if(BasicChat.currentJoinedSession != null) {
-				if(GUI.Button(new Rect(((Screen.width)/3),xStart,(Screen.width)/3, BUTTON_SIZE),
-					"Leave \n"+BasicChat.currentJoinedSession.Substring(BasicChat.currentJoinedSession.LastIndexOf("."))))
-				{	
-					basicChat.LeaveSession();
-					playerNr = 1;
-				}
-			}
-			
-			if(!BasicChat.AllJoynStarted) {
-				if(GUI.Button(new Rect(((Screen.width)/3)*2,xStart,(Screen.width)/3, BUTTON_SIZE), "START ALLJOYN"))
-				{	
-					basicChat.StartUp();
-				}
-			}
-			
-			foreach(string name in BasicChat.sFoundName){
-				xStart = (Screen.height / 2)+10+((i++)*BUTTON_SIZE);
-				if(GUI.Button(new Rect(10,xStart,(Screen.width-20), BUTTON_SIZE),basicChat.RetrievePlayerNick(name)))//.Substring(name.LastIndexOf("."))))
-				{	
-					basicChat.JoinSession(name);
-					playerNr = 2;
-				}
-			}
-			
-			msgText = GUI.TextField(new Rect (0, Screen.height-BUTTON_SIZE, (Screen.width/4) * 3, BUTTON_SIZE), msgText);
-			if(GUI.Button(new Rect(Screen.width - (Screen.width/4),Screen.height-BUTTON_SIZE, (Screen.width/4), BUTTON_SIZE),"Send"))
-			{	
-				ArrayList points = new ArrayList();
-				points.Add(new Vector3(1.0f, 2.0f, 3.0f));
-				points.Add(new Vector3(-1.0f, 0.0f, 200.0f));
-				points.Add(new Vector3(-93.2f, 23.99f, 200.99f));
-				basicChat.SendVector(points);
-				//basicChat.SendTheMsg(msgText);
-				//Debug easter egg
-				if(string.Compare("spam",msgText) == 0)
-					spamMessages = true;
-				else if(string.Compare("stop",msgText) == 0)
-				{
-					spamMessages = false;
-					spamCount = 0;
-				}
-			}
-		}*/
 		
 		// Use this for initialization
 		void Start()
@@ -137,6 +70,16 @@ namespace client_server
 			basicChat = new BasicChat(playerNick);
 		}
 		
+		public bool HasEnvData()
+		{
+			return basicChat.HasEnvData();	
+		}
+		
+		public double[] GetEnvData()
+		{
+			return basicChat.GetEnvData();	
+		}
+		
 		public bool IsDuringGame()
 		{
 			return basicChat.IsDuringGame();
@@ -147,10 +90,10 @@ namespace client_server
 			basicChat.GameStarted();	
 		}
 		
-		public void UpdateState(double[] state)
+		public void SendUpdateState(double[] state)
 		{
 			Debug.Log ("AllJoynClientServer: SHOULD sent data to P2");
-			Debug.Log ("STATE: " + state);
+			basicChat.SendDoubleArray(state);
 		}
 		
 		public int GetPlayerNr()

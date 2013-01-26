@@ -15,26 +15,29 @@ public class PathStateRaw extends System.ValueType {
     
     // Konstruktor wykorzystywany przy pobieraniu danych od I gracza
 	public function PathStateRaw(data: double[]) {
+		PathStateRaw.Validate(data);
 		var padsCountIndex = 0;
 		this.PadsCount = data[padsCountIndex];
 		var pointsCountIndex = 1 + padsCountIndex + DoublesPerPad * this.PadsCount;
 		this.PointsCount = data[pointsCountIndex];
-		var obstaclesStartIndex = pointsCountIndex + DoublesPerPoint * this.PointsCount;
+		var obstaclesStartIndex = 1 + pointsCountIndex + DoublesPerPoint * this.PointsCount;
 		this.ObstaclesCount = (data.Length - obstaclesStartIndex) / DoublesPerObstacle;
 		var i: int;
 		var j: int;
-		PadsTypes = new double[this.PadsCount];
+		this.PadsTypes = new double[DoublesPerPad * this.PadsCount];
 		j = 0;
 		for (i = padsCountIndex + 1; i < pointsCountIndex; i++)
-			PadsTypes[j++] = data[i];
+			this.PadsTypes[j++] = data[i];
 		
+		this.PathPoints = new double[DoublesPerPoint * this.PointsCount];
 		j = 0;
 		for (i = pointsCountIndex + 1; i < obstaclesStartIndex; i++)
-			PathPoints[j++] = data[i];
+			this.PathPoints[j++] = data[i];
 		
+		this.ObstaclesData = new double[DoublesPerObstacle * this.ObstaclesCount];
 		j = 0;
 		for (i = obstaclesStartIndex; i < data.Length; i++)
-			ObstaclesData[j++] = data[i];
+			this.ObstaclesData[j++] = data[i];
 	}
 	
 	public static function Pack(pads: PadState[], points: Vector3[]) : double[] {
@@ -50,12 +53,22 @@ public class PathStateRaw extends System.ValueType {
 		return data;
 	}
 	
+	public static function Validate(data: double[]) {
+		var size = data.Length;
+		var padsCount: int = data[0];
+		var pointsCount: int = data[padsCount + 1];
+		Debug.Log("SIZE: " + size);
+		Debug.Log("Pads count: " + padsCount);
+		Debug.Log("Points count: " + pointsCount);
+		Debug.Log("Obst count: " + (size - (2 + 3 * pointsCount + 1 * padsCount)) / DoublesPerObstacle);
+	}
+	
 	private static function CalculateSizeForData(pads: PadState[], points: Vector3[]) : int {
 		var size = 1;
 		for (var pad: PadState in pads) {
 			size += DoublesPerPad + DoublesPerObstacle * pad.ObstaclesStates.Length;
 		}
-		size += points.Length + 3 * points.Length;
+		size += 1 + 3 * points.Length;
 		
 		return size;
 	}
@@ -167,7 +180,7 @@ function Init() {
 	if (!gameManager) {
 		Debug.LogError("Proxy Env Gen: unable to find GameManager in Awake()");
 	}
-	meGenerating = gameManager.IsObjGenerating(gameObject);
+	meGenerating = gameManager.IsProxyObjGenerating(gameObject);
 	Debug.Log("MG: " + meGenerating);
 }
 
@@ -195,8 +208,8 @@ function UpdateState(data: double[]) {
 	
 	if (rawData.PointsCount > 0) {
 		var pData = rawData.PathPoints;
-		for (i = 0; i < rawData.PointsCount; i += 3) {
-			points[i] = Vector3(pData[i], pData[i+1], pData[i+2]);
+		for (i = 0; i < rawData.PointsCount; i += 1) {
+			points[i] = Vector3(pData[3 * i], pData[3 * i+1], pData[3 * i+2]);
 		}
 	}
 	
@@ -330,13 +343,12 @@ function GeneratePad(padState: PadState, next: Vector3) {
 	trans.Normalize();
 	trans.y = 0;
 	
-	Debug.Log("GP: " + next);
-	
 	var newElement = pathPrefabs[padState.PadType];
 	var padOffset = Vector3(0, - newElement.lossyScale.y / 2, 0);
 	var position = border + trans * (newElement.lossyScale.z / 2) + padOffset;
 	var rotation: Quaternion = (trans != Vector3.zero) ? Quaternion.LookRotation(trans) : Quaternion.identity;
 	if (meGenerating) {
+		Debug.Log("PAD at " + position);
 		Instantiate(newElement, position, rotation);
 	}
 	var pad = new PathPad(position, rotation, newElement);
@@ -347,8 +359,12 @@ function GeneratePad(padState: PadState, next: Vector3) {
 
 //skasowac ewentualne losowanie
 // Wygenerowanie nowych kladek, jesli sa potrzebne
-function GeneratePads (padStates: PadState[], positions: Vector3[]) {//(positions: Vector3[]) {
+function GeneratePads (padStates: PadState[], positions: Vector3[]) {
+	Debug.Log("Generate Pads");
 	var currentPad = 0;
+	for (var i = 0; i < positions.Length; i++) {
+		Debug.Log("Pos["+i+"] = " + positions[i]);
+	}
 	if (positions.Length > 0) {
 		for (position in positions) {
 			if (ShouldGeneratePad(position)) {
