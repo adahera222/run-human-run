@@ -181,7 +181,6 @@ function Init() {
 		Debug.LogError("Proxy Env Gen: unable to find GameManager in Awake()");
 	}
 	meGenerating = gameManager.IsProxyObjGenerating(gameObject);
-	Debug.Log("MG: " + meGenerating);
 }
 
 function Update() {
@@ -363,7 +362,7 @@ function GeneratePads (padStates: PadState[], positions: Vector3[]) {
 	Debug.Log("Generate Pads");
 	var currentPad = 0;
 	for (var i = 0; i < positions.Length; i++) {
-		Debug.Log("Pos["+i+"] = " + positions[i]);
+		//Debug.Log("Pos["+i+"] = " + positions[i]);
 	}
 	if (positions.Length > 0) {
 		for (position in positions) {
