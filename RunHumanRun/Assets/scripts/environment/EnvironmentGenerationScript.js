@@ -6,7 +6,7 @@
 #pragma strict
 
 import System.Collections.Generic;
-import client_server;
+import rhr_multi;
 
 // Klasa przechowujaca informacje o kladce tworzacej sciezke,
 // po ktorej biegnie gracz

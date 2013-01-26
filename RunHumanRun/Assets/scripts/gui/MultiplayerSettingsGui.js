@@ -1,7 +1,7 @@
 #pragma strict
 
 import System.Collections.Generic;
-import client_server;
+import rhr_multi;
 
 enum MultiplayerState {
 	InitState,
@@ -121,8 +121,8 @@ function FindGameState () {
 		return;
 	}
 	
-	if (clientServer.GetChatText() != null) {
-		GUI.TextArea(new Rect (0, 0, Screen.width, (Screen.height / 2)), clientServer.GetChatText());
+	if (clientServer.GetDebugText() != null) {
+		GUI.TextArea(new Rect (0, 0, Screen.width, (Screen.height / 2)), clientServer.GetDebugText());
 	}
 	var i = 0;
 	var xStart = (Screen.height / 2)+10+ ((i++) * buttonSize);

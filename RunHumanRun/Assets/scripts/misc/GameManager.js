@@ -1,6 +1,6 @@
 #pragma strict
 
-import client_server;
+import rhr_multi;
 
 // numer gracza: jesli gra czlowiek vs komputer, to czlowiek jest graczem nr 1,
 // jesli gra czlowiek vs czlowiek, to graczem nr 1 jest ten gracz, do ktorego gry

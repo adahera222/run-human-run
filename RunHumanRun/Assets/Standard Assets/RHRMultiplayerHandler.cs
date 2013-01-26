@@ -1,28 +1,10 @@
-//-----------------------------------------------------------------------
-// <copyright file="BasicChat.cs" company="Qualcomm Innovation Center, Inc.">
-// Copyright 2012, Qualcomm Innovation Center, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// </copyright>
-//-----------------------------------------------------------------------
-
 using UnityEngine;
 using AllJoynUnity;
 using System.Runtime.InteropServices;
 using System.Collections;
 using System.Threading;
 
-namespace basic_clientserver
+namespace rhr_multi
 {
 	class RHRMultiplayerHandler : MonoBehaviour
 	{
@@ -43,7 +25,7 @@ namespace basic_clientserver
 		private static MySessionListener sessionListener;
 		private static TestBusObject testObj;
 		private AllJoyn.InterfaceDescription testIntf;
-		public static string chatText = "";
+		public static string debugText = "";
         public AllJoyn.SessionOpts opts;
 		
 		public static ArrayList sFoundName = new ArrayList();
@@ -73,7 +55,7 @@ namespace basic_clientserver
 				AllJoyn.QStatus status = AddInterface(exampleIntf);
 				if(!status)
 				{
-					chatText = "RHR Failed to add interface " + status.ToString() + "\n" + chatText;
+					debugText = "RHR Failed to add interface " + status.ToString() + "\n" + debugText;
 					Debug.Log("RHR Failed to add interface " + status.ToString());
 				}
 				
@@ -84,7 +66,7 @@ namespace basic_clientserver
 			protected override void OnObjectRegistered ()
 			{
 			
-				chatText = "RHR ObjectRegistered has been called\n" + chatText;
+				debugText = "RHR ObjectRegistered has been called\n" + debugText;
 				Debug.Log("RHR ObjectRegistered has been called");
 			}
 			
@@ -103,7 +85,7 @@ namespace basic_clientserver
 				AllJoyn.QStatus status = Signal(null, currentSessionId, vectorMember, payload, 0, 64);
 				if(!status) {
 					Debug.Log("RHR failed to send vector signal: "+status.ToString());	
-					chatText += "RHR failed to send vector signal: "+status.ToString() + "\n" + chatText;
+					debugText += "RHR failed to send vector signal: "+status.ToString() + "\n" + debugText;
 				}
 			}
 		}
@@ -112,11 +94,11 @@ namespace basic_clientserver
 		{
 			protected override void FoundAdvertisedName(string name, AllJoyn.TransportMask transport, string namePrefix)
 			{
-				chatText = "RHR FoundAdvertisedName(name=" + name + ", prefix=" + namePrefix + ")\n" + chatText;
+				debugText = "RHR FoundAdvertisedName(name=" + name + ", prefix=" + namePrefix + ")\n" + debugText;
 				Debug.Log("RHR FoundAdvertisedName(name=" + name + ", prefix=" + namePrefix + ")");
 				if(string.Compare(myAdvertisedName, name) == 0)
 				{
-					chatText = "Ignoring my advertisement\n" + chatText;
+					debugText = "Ignoring my advertisement\n" + debugText;
 					Debug.Log("Ignoring my advertisement");
 				} else if(string.Compare(SERVICE_NAME, namePrefix) == 0)
 				{
@@ -126,24 +108,21 @@ namespace basic_clientserver
 
             protected override void ListenerRegistered(AllJoyn.BusAttachment busAttachment)
             {
-                chatText = "RHR ListenerRegistered: busAttachment=" + busAttachment + "\n" + chatText;
+                debugText = "RHR ListenerRegistered: busAttachment=" + busAttachment + "\n" + debugText;
                 Debug.Log("RHR ListenerRegistered: busAttachment=" + busAttachment);
             }
 
 			protected override void NameOwnerChanged(string busName, string previousOwner, string newOwner)
 			{
-				//if(string.Compare(SERVICE_NAME, busName) == 0)
-				{
-					chatText = "RHR NameOwnerChanged: name=" + busName + ", oldOwner=" +
-						previousOwner + ", newOwner=" + newOwner + "\n" + chatText;
-					Debug.Log("RHR NameOwnerChanged: name=" + busName + ", oldOwner=" +
-						previousOwner + ", newOwner=" + newOwner);
-				}
+				debugText = "RHR NameOwnerChanged: name=" + busName + ", oldOwner=" +
+					previousOwner + ", newOwner=" + newOwner + "\n" + debugText;
+				Debug.Log("RHR NameOwnerChanged: name=" + busName + ", oldOwner=" +
+					previousOwner + ", newOwner=" + newOwner);
 			}
 			
 			protected override void LostAdvertisedName(string name, AllJoyn.TransportMask transport, string namePrefix)
 			{
-				chatText = "RHR LostAdvertisedName(name=" + name + ", prefix=" + namePrefix + ")\n" + chatText;
+				debugText = "RHR LostAdvertisedName(name=" + name + ", prefix=" + namePrefix + ")\n" + debugText;
 				Debug.Log("RHR LostAdvertisedName(name=" + name + ", prefix=" + namePrefix + ")");
 				sFoundName.Remove(name);
 			}
@@ -151,11 +130,11 @@ namespace basic_clientserver
 
 		class MySessionPortListener : AllJoyn.SessionPortListener
 		{
-			private RHRMultiplayerHandler chat;
+			private RHRMultiplayerHandler multiplayerHandler;
 			
-			public MySessionPortListener(RHRMultiplayerHandler chat)
+			public MySessionPortListener(RHRMultiplayerHandler multiplayerHandler)
 			{
-				this.chat = chat;
+				this.multiplayerHandler = multiplayerHandler;
 			}
 			
 			protected override bool AcceptSessionJoiner(ushort sessionPort, string joiner, AllJoyn.SessionOpts opts)
@@ -163,13 +142,13 @@ namespace basic_clientserver
 			
 				if (sessionPort != SERVICE_PORT)
 				{
-					chatText = "RHR Rejecting join attempt on unexpected session port " + sessionPort + "\n" + chatText;
+					debugText = "RHR Rejecting join attempt on unexpected session port " + sessionPort + "\n" + debugText;
 					Debug.Log("RHR Rejecting join attempt on unexpected session port " + sessionPort);
 					return false;
 				}
-				chatText = "RHR Accepting join session request from " + joiner + 
+				debugText = "RHR Accepting join session request from " + joiner + 
 					" (opts.proximity=" + opts.Proximity + ", opts.traffic=" + opts.Traffic + 
-					", opts.transports=" + opts.Transports + ")\n" + chatText;
+					", opts.transports=" + opts.Transports + ")\n" + debugText;
 				Debug.Log("RHR Accepting join session request from " + joiner + 
 					" (opts.proximity=" + opts.Proximity + ", opts.traffic=" + opts.Traffic + 
 					", opts.transports=" + opts.Transports + ")");
@@ -179,13 +158,13 @@ namespace basic_clientserver
 			protected override void SessionJoined(ushort sessionPort, uint sessionId, string joiner)
 			{
 				Debug.Log("Session Joined!!!!!!");
-				chatText = "Session Joined!!!!!! \n" + chatText;
+				debugText = "Session Joined!!!!!! \n" + debugText;
 				currentSessionId = sessionId;
 				currentJoinedSession = myAdvertisedName;
-				chat.SetConnectedPlayerNick(joiner);
-				chat.GameStarted();
+				multiplayerHandler.SetConnectedPlayerNick(joiner);
+				multiplayerHandler.GameStarted();
 				if(sessionListener == null) {
-					sessionListener = new MySessionListener(chat);
+					sessionListener = new MySessionListener(multiplayerHandler);
 					msgBus.SetSessionListener(sessionListener, sessionId);
 				}
 			}
@@ -193,29 +172,29 @@ namespace basic_clientserver
 		
 		class MySessionListener : AllJoyn.SessionListener
 		{
-			private RHRMultiplayerHandler chat;
+			private RHRMultiplayerHandler multiplayerHandler;
 			
-			public MySessionListener(RHRMultiplayerHandler chat)
+			public MySessionListener(RHRMultiplayerHandler multiplayerHandler)
 			{
-				this.chat = chat;	
+				this.multiplayerHandler = multiplayerHandler;	
 			}
 			protected override void	SessionLost(uint sessionId)
 			{
-				chat.SetConnectedPlayerNick("");
-				chat.GameEnded();
-				chatText = "SessionLost ("+sessionId+") \n" + chatText;	
+				multiplayerHandler.SetConnectedPlayerNick("");
+				multiplayerHandler.GameEnded();
+				debugText = "SessionLost ("+sessionId+") \n" + debugText;	
 				Debug.Log("SessionLost ("+sessionId+")");
 			}
 			
 			protected override void SessionMemberAdded(uint sessionId, string uniqueName)
 			{
-				chatText = "SessionMemberAdded ("+sessionId+","+uniqueName+") \n" + chatText;	
+				debugText = "SessionMemberAdded ("+sessionId+","+uniqueName+") \n" + debugText;	
 				Debug.Log("SessionMemberAdded ("+sessionId+","+uniqueName+")");
 			}
 
 			protected override void SessionMemberRemoved(uint sessionId, string uniqueName)
 			{	
-				chatText = "SessionMemberRemoved ("+sessionId+","+uniqueName+") \n" + chatText;	
+				debugText = "SessionMemberRemoved ("+sessionId+","+uniqueName+") \n" + debugText;	
 				Debug.Log("SessionMemberRemoved ("+sessionId+","+uniqueName+")");
 			}
 		}
@@ -302,20 +281,18 @@ namespace basic_clientserver
 		
 		public void StartUp()
 		{
-			chatText = "Starting AllJoyn\n\n\n" + chatText;
+			debugText = "Starting AllJoyn\n\n\n" + debugText;
 			AllJoynStarted = true;
 			AllJoyn.QStatus status = AllJoyn.QStatus.OK;
 			{
-				chatText = "Creating BusAttachment\n" + chatText;
-				// Create message bus
+				debugText = "Creating BusAttachment\n" + debugText;
 				msgBus = new AllJoyn.BusAttachment("myApp", true);
 	
-				// Add org.alljoyn.Bus.method_sample interface
 				status = msgBus.CreateInterface(INTERFACE_NAME, false, out testIntf);
 				if(status)
 				{
 				
-					chatText = "RHR Interface Created.\n" + chatText;
+					debugText = "RHR Interface Created.\n" + debugText;
 					Debug.Log("RHR Interface Created.");
 					testIntf.AddSignal("chat", "s", "msg", 0);
 					testIntf.AddSignal ("vector", "ad", "points", 0);
@@ -323,17 +300,16 @@ namespace basic_clientserver
 				}
 				else
 				{
-					chatText = "Failed to create interface 'org.alljoyn.Bus.chat'\n" + chatText;
+					debugText = "Failed to create interface 'org.alljoyn.Bus.chat'\n" + debugText;
 					Debug.Log("Failed to create interface 'org.alljoyn.Bus.chat'");
 				}
 	
-				// Create a bus listener
 				busListener = new MyBusListener();
 				if(status)
 				{
 				
 					msgBus.RegisterBusListener(busListener);
-					chatText = "RHR BusListener Registered.\n" + chatText;
+					debugText = "RHR BusListener Registered.\n" + debugText;
 					Debug.Log("RHR BusListener Registered.");
 				}
 				
@@ -341,44 +317,43 @@ namespace basic_clientserver
 				if(testObj == null)
 					testObj = new TestBusObject(msgBus, SERVICE_PATH);
 				
-				// Start the msg bus
 				if(status)
 				{
 				
 					status = msgBus.Start();
 					if(status)
 					{
-						chatText = "RHR BusAttachment started.\n" + chatText;
+						debugText = "RHR BusAttachment started.\n" + debugText;
 						Debug.Log("RHR BusAttachment started.");
 						
 						msgBus.RegisterBusObject(testObj);
 						for (int i = 0; i < connectArgs.Length; ++i)
 						{
-							chatText = "RHR Connect trying: "+connectArgs[i]+"\n" + chatText;
+							debugText = "RHR Connect trying: "+connectArgs[i]+"\n" + debugText;
 							Debug.Log("RHR Connect trying: "+connectArgs[i]);
 							status = msgBus.Connect(connectArgs[i]);
 							if (status)
 							{
-								chatText = "BusAttchement.Connect(" + connectArgs[i] + ") SUCCEDED.\n" + chatText;
+								debugText = "BusAttchement.Connect(" + connectArgs[i] + ") SUCCEDED.\n" + debugText;
 								Debug.Log("BusAttchement.Connect(" + connectArgs[i] + ") SUCCEDED.");
 								connectedVal = connectArgs[i];
 								break;
 							}
 							else
 							{
-								chatText = "BusAttachment.Connect(" + connectArgs[i] + ") failed.\n" + chatText;
+								debugText = "BusAttachment.Connect(" + connectArgs[i] + ") failed.\n" + debugText;
 								Debug.Log("BusAttachment.Connect(" + connectArgs[i] + ") failed.");
 							}
 						}
 						if(!status)
 						{
-							chatText = "BusAttachment.Connect failed.\n" + chatText;
+							debugText = "BusAttachment.Connect failed.\n" + debugText;
 							Debug.Log("BusAttachment.Connect failed.");
 						}
 					}
 					else
 					{
-						chatText = "RHR BusAttachment.Start failed.\n" + chatText;
+						debugText = "RHR BusAttachment.Start failed.\n" + debugText;
 						Debug.Log("RHR BusAttachment.Start failed.");
 					}
 				}
@@ -389,11 +364,11 @@ namespace basic_clientserver
 				status = msgBus.RegisterSignalHandler(this.ChatSignalHandler, chatMember, null);
 				if(!status)
 				{
-					chatText ="RHR Failed to add signal handler " + status + "\n" + chatText;
+					debugText ="RHR Failed to add signal handler " + status + "\n" + debugText;
 					Debug.Log("RHR Failed to add signal handler " + status);
 				}
 				else {			
-					chatText ="RHR add signal handler " + status + "\n" + chatText;
+					debugText ="RHR add signal handler " + status + "\n" + debugText;
 					Debug.Log("RHR add signal handler " + status);
 				}
 				
@@ -401,22 +376,22 @@ namespace basic_clientserver
 				status = msgBus.RegisterSignalHandler(this.VectorSignalHandler, vectorMember, null);
 				if(!status)
 				{
-					chatText ="RHR Failed to add vector signal handler " + status + "\n" + chatText;
+					debugText ="RHR Failed to add vector signal handler " + status + "\n" + debugText;
 					Debug.Log("RHR Failed to add vector signal handler " + status);
 				}
 				else {			
-					chatText ="RHR add vector signal handler " + status + "\n" + chatText;
+					debugText ="RHR add vector signal handler " + status + "\n" + debugText;
 					Debug.Log("RHR add vector signal handler " + status);
 				}
 				
 				status = msgBus.AddMatch("type='signal',member='chat'");
 				if(!status)
 				{
-					chatText ="RHR Failed to add Match " + status.ToString() + "\n" + chatText;
+					debugText ="RHR Failed to add Match " + status.ToString() + "\n" + debugText;
 					Debug.Log("RHR Failed to add Match " + status.ToString());
 				}
 				else {			
-					chatText ="RHR add Match " + status.ToString() + "\n" + chatText;
+					debugText ="RHR add Match " + status.ToString() + "\n" + debugText;
 					Debug.Log("RHR add Match " + status.ToString());
 				}
 				
@@ -424,16 +399,15 @@ namespace basic_clientserver
 				status = msgBus.AddMatch("type='signal',member='vector'");
 				if(!status)
 				{
-					chatText ="RHR Failed to add vector Match " + status.ToString() + "\n" + chatText;
+					debugText ="RHR Failed to add vector Match " + status.ToString() + "\n" + debugText;
 					Debug.Log("RHR Failed to add vector Match " + status.ToString());
 				}
 				else {			
-					chatText ="RHR add vector Match " + status.ToString() + "\n" + chatText;
+					debugText ="RHR add vector Match " + status.ToString() + "\n" + debugText;
 					Debug.Log("RHR add vector Match " + status.ToString());
 				}
 			}
 			
-			// Request name
 			if(status)
 			{
 			
@@ -441,12 +415,11 @@ namespace basic_clientserver
 					AllJoyn.DBus.NameFlags.ReplaceExisting | AllJoyn.DBus.NameFlags.DoNotQueue);
 				if(!status)
 				{
-					chatText ="RHR RequestName(" + SERVICE_NAME + ") failed (status=" + status + ")\n" + chatText;
+					debugText ="RHR RequestName(" + SERVICE_NAME + ") failed (status=" + status + ")\n" + debugText;
 					Debug.Log("RHR RequestName(" + SERVICE_NAME + ") failed (status=" + status + ")");
 				}
 			}
 
-			// Create session
 			opts = new AllJoyn.SessionOpts(AllJoyn.SessionOpts.TrafficType.Messages, false,
 					AllJoyn.SessionOpts.ProximityType.Any, AllJoyn.TransportMask.Any);
 			if(status)
@@ -457,20 +430,19 @@ namespace basic_clientserver
 				status = msgBus.BindSessionPort(ref sessionPort, opts, sessionPortListener);
 				if(!status || sessionPort != SERVICE_PORT)
 				{
-					chatText = "RHR BindSessionPort failed (" + status + ")\n" + chatText;
+					debugText = "RHR BindSessionPort failed (" + status + ")\n" + debugText;
 					Debug.Log("RHR BindSessionPort failed (" + status + ")");
 				}
-				chatText = "RHR BindSessionPort on port (" + sessionPort + ")\n" + chatText;
+				debugText = "RHR BindSessionPort on port (" + sessionPort + ")\n" + debugText;
 				Debug.Log("RHR BBindSessionPort on port (" + sessionPort + ")");;
 			}
 
-			// Advertise name
 			if(status)
 			{
 				status = msgBus.AdvertiseName(myAdvertisedName, opts.Transports);
 				if(!status)
 				{
-					chatText = "RHR Failed to advertise name " + myAdvertisedName + " (" + status + ")\n" + chatText;
+					debugText = "RHR Failed to advertise name " + myAdvertisedName + " (" + status + ")\n" + debugText;
 					Debug.Log("RHR Failed to advertise name " + myAdvertisedName + " (" + status + ")");
 				}
 			}
@@ -478,7 +450,7 @@ namespace basic_clientserver
 			status = msgBus.FindAdvertisedName(SERVICE_NAME);
 			if(!status)
 			{
-				chatText = "RHR org.alljoyn.Bus.FindAdvertisedName failed.\n" + chatText;
+				debugText = "RHR org.alljoyn.Bus.FindAdvertisedName failed.\n" + debugText;
 				Debug.Log("RHR org.alljoyn.Bus.FindAdvertisedName failed.");
 			}
 			
@@ -488,7 +460,7 @@ namespace basic_clientserver
 		public void ChatSignalHandler(AllJoyn.InterfaceDescription.Member member, string srcPath, AllJoyn.Message message)
 		{
 			Debug.Log("Client Chat msg - : "+ message[0]);
-			chatText = "Client Chat msg: ("+message[0]+ ")\n" + chatText;
+			debugText = "Client Chat msg: ("+message[0]+ ")\n" + debugText;
 		}
 		
 		public void VectorSignalHandler(AllJoyn.InterfaceDescription.Member member, string srcPath, AllJoyn.Message message)
@@ -523,23 +495,23 @@ namespace basic_clientserver
 				status = msgBus.SetSessionListener(null, currentSessionId);
 				sessionListener = null;
 				if(!status) {
-	            	chatText = "SetSessionListener failed status(" + status.ToString() + ")\n" + chatText;
+	            	debugText = "SetSessionListener failed status(" + status.ToString() + ")\n" + debugText;
 					Debug.Log("SetSessionListener status(" + status.ToString() + ")");
 				}
 			}
 			sessionListener = new MySessionListener(this);
-			chatText = "About to call JoinSession (Session=" + session + ")\n" + chatText;
+			debugText = "About to call JoinSession (Session=" + session + ")\n" + debugText;
 			Debug.Log("About to call JoinSession (Session=" + session + ")");
 			status = msgBus.JoinSession(session, SERVICE_PORT, sessionListener, out currentSessionId, opts);
 			if(status)
 			{
-				chatText = "Client JoinSession SUCCESS (Session id=" + currentSessionId + ")\n" + chatText;
+				debugText = "Client JoinSession SUCCESS (Session id=" + currentSessionId + ")\n" + debugText;
 				Debug.Log("Client JoinSession SUCCESS (Session id=" + currentSessionId + ")");
 				currentJoinedSession = session;
 			}
 			else
 			{
-				chatText = "RHR JoinSession failed (status=" + status.ToString() + ")\n" + chatText;
+				debugText = "RHR JoinSession failed (status=" + status.ToString() + ")\n" + debugText;
 				Debug.Log("RHR JoinSession failed (status=" + status.ToString() + ")");
 			}
 			
@@ -556,7 +528,7 @@ namespace basic_clientserver
 					status = msgBus.SetSessionListener(null, currentSessionId);
 					sessionListener = null;
 					if(!status) {
-		            	chatText = "SetSessionListener failed status(" + status.ToString() + ")\n" + chatText;
+		            	debugText = "SetSessionListener failed status(" + status.ToString() + ")\n" + debugText;
 						Debug.Log("SetSessionListener status(" + status.ToString() + ")");
 					}
 				}
@@ -564,14 +536,14 @@ namespace basic_clientserver
 				status = msgBus.LeaveSession(currentSessionId);
 				if(status)
 				{
-					chatText = "RHR LeaveSession SUCCESS (Session id=" + currentSessionId + ")\n" + chatText;
+					debugText = "RHR LeaveSession SUCCESS (Session id=" + currentSessionId + ")\n" + debugText;
 					Debug.Log("RHR LeaveSession SUCCESS (Session id=" + currentSessionId + ")");
 					currentSessionId = 0;
 					currentJoinedSession = null;
 				}
 				else
 				{
-					chatText = "RHR LeaveSession failed (status=" + status.ToString() + ")\n" + chatText;
+					debugText = "RHR LeaveSession failed (status=" + status.ToString() + ")\n" + debugText;
 					Debug.Log("RHR LeaveSession failed (status=" + status.ToString() + ")");
 				}
 			} else {
@@ -583,33 +555,33 @@ namespace basic_clientserver
 		public void CloseDown()
 		{	
 			if(msgBus == null)
-				return; //no need to clean anything up
+				return;
 			AllJoynStarted = false;
 			LeaveSession();
 			AllJoyn.QStatus status = msgBus.CancelFindAdvertisedName(SERVICE_NAME);
 			if(!status) {
-            	chatText = "CancelAdvertisedName failed status(" + status.ToString() + ")\n" + chatText;
+            	debugText = "CancelAdvertisedName failed status(" + status.ToString() + ")\n" + debugText;
 				Debug.Log("CancelAdvertisedName failed status(" + status.ToString() + ")");
 			}
 			status = msgBus.CancelAdvertisedName(myAdvertisedName, opts.Transports);
 			if(!status) {
-            	chatText = "CancelAdvertisedName failed status(" + status.ToString() + ")\n" + chatText;
+            	debugText = "CancelAdvertisedName failed status(" + status.ToString() + ")\n" + debugText;
 				Debug.Log("CancelAdvertisedName failed status(" + status.ToString() + ")");
 			}
 			status = msgBus.ReleaseName(myAdvertisedName);
 			if(!status) {
-            	chatText = "ReleaseName failed status(" + status.ToString() + ")\n" + chatText;
+            	debugText = "ReleaseName failed status(" + status.ToString() + ")\n" + debugText;
 				Debug.Log("ReleaseName status(" + status.ToString() + ")");
 			}
 			status = msgBus.UnbindSessionPort(SERVICE_PORT);
 			if(!status) {
-            	chatText = "UnbindSessionPort failed status(" + status.ToString() + ")\n" + chatText;
+            	debugText = "UnbindSessionPort failed status(" + status.ToString() + ")\n" + debugText;
 				Debug.Log("UnbindSessionPort status(" + status.ToString() + ")");
 			}
 			
 			status = msgBus.Disconnect(connectedVal);
 			if(!status) {
-            	chatText = "Disconnect failed status(" + status.ToString() + ")\n" + chatText;
+            	debugText = "Disconnect failed status(" + status.ToString() + ")\n" + debugText;
 				Debug.Log("Disconnect status(" + status.ToString() + ")");
 			}
 			
@@ -617,7 +589,7 @@ namespace basic_clientserver
 			status = msgBus.UnregisterSignalHandler(this.ChatSignalHandler, chatMember, null);
 			chatMember = null;
 			if(!status) {
-            	chatText = "UnregisterSignalHandler failed status(" + status.ToString() + ")\n" + chatText;
+            	debugText = "UnregisterSignalHandler failed status(" + status.ToString() + ")\n" + debugText;
 				Debug.Log("UnregisterSignalHandler status(" + status.ToString() + ")");
 			}
 			
@@ -625,18 +597,18 @@ namespace basic_clientserver
 			status = msgBus.UnregisterSignalHandler(this.VectorSignalHandler, vectorMember, null);
 			vectorMember = null;
 			if(!status) {
-            	chatText = "UnregisterSignalHandler Vector failed status(" + status.ToString() + ")\n" + chatText;
+            	debugText = "UnregisterSignalHandler Vector failed status(" + status.ToString() + ")\n" + debugText;
 				Debug.Log("UnregisterSignalHandler Vector status(" + status.ToString() + ")");
 			}
 			if(sessionListener != null) {
 				status = msgBus.SetSessionListener(null, currentSessionId);
 				sessionListener = null;
 				if(!status) {
-	            	chatText = "SetSessionListener failed status(" + status.ToString() + ")\n" + chatText;
+	            	debugText = "SetSessionListener failed status(" + status.ToString() + ")\n" + debugText;
 					Debug.Log("SetSessionListener status(" + status.ToString() + ")");
 				}
 			}
-			chatText = "No Exceptions(" + status.ToString() + ")\n" + chatText;
+			debugText = "No Exceptions(" + status.ToString() + ")\n" + debugText;
 			Debug.Log("No Exceptions(" + status.ToString() + ")");
 			currentSessionId = 0;
 			currentJoinedSession = null;
@@ -653,7 +625,7 @@ namespace basic_clientserver
 			
 			AllJoynStarted = false;
 			
-			AllJoyn.StopAllJoynProcessing(); //Stop processing alljoyn callbacks
+			AllJoyn.StopAllJoynProcessing();
 		}
 	}
 }

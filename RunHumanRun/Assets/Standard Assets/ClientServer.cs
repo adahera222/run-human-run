@@ -1,9 +1,8 @@
 using UnityEngine;
 using AllJoynUnity;
-using basic_clientserver;
 using System.Collections;
 
-namespace client_server
+namespace rhr_multi
 {
 	public class ClientServer : MonoBehaviour
 	{
@@ -13,24 +12,22 @@ namespace client_server
 		// domyslnie nr gracza to 1, jak dolacza do sesji, staje sie graczem nr 2
 		private int playerNr = 1;
 		
-		public string GetChatText()
+		public string GetDebugText()
 		{
-			return RHRMultiplayerHandler.chatText;	
+			return RHRMultiplayerHandler.debugText;	
 		}
 		
-		// Use this for initialization
 		void Start()
 		{
 			DontDestroyOnLoad(this);
 		}
 	
-		// Update is called once per frame
 	    void Update()
 		{
 			if (!isWorking)
 				return;
 	        if (Input.GetKeyDown(KeyCode.Escape)) {
-				basicChat.CloseDown();
+				multiplayerHandler.CloseDown();
 				Application.Quit();
 			}
 		}
@@ -41,33 +38,33 @@ namespace client_server
 			playerNick = nick;
 			playerNr = 1;
 			Debug.Log("Starting up AllJoyn service and client");
-			basicChat = new RHRMultiplayerHandler(playerNick);
+			multiplayerHandler = new RHRMultiplayerHandler(playerNick);
 		}
 		
 		public bool HasEnvData()
 		{
-			return basicChat.HasEnvData();	
+			return multiplayerHandler.HasEnvData();	
 		}
 		
 		public double[] GetEnvData()
 		{
-			return basicChat.GetEnvData();	
+			return multiplayerHandler.GetEnvData();	
 		}
 		
 		public bool IsDuringGame()
 		{
-			return basicChat.IsDuringGame();
+			return multiplayerHandler.IsDuringGame();
 		}
 		
 		public void SetTestStart()
 		{
-			basicChat.GameStarted();	
+			multiplayerHandler.GameStarted();	
 		}
 		
 		public void SendUpdateState(double[] state)
 		{
-			Debug.Log ("AllJoynClientServer: SHOULD sent data to P2");
-			basicChat.SendDoubleArray(state);
+			Debug.Log ("ClientServer: SHOULD sent data to P2");
+			multiplayerHandler.SendDoubleArray(state);
 		}
 		
 		public int GetPlayerNr()
@@ -82,24 +79,24 @@ namespace client_server
 		
 		public void StartUp()
 		{
-			basicChat.StartUp();
+			multiplayerHandler.StartUp();
 		}
 		
 		public void JoinSession(string session)
 		{
-			basicChat.JoinSession(session);
+			multiplayerHandler.JoinSession(session);
 			playerNr = 2;
 		}
 		
 		public void LeaveSession()
 		{
-			basicChat.LeaveSession();
+			multiplayerHandler.LeaveSession();
 			playerNr = 1;
 		}
 		
 		public void CloseDown()
 		{
-			basicChat.CloseDown();	
+			multiplayerHandler.CloseDown();	
 		}
 		
 		public bool HasJoinedSession()
@@ -109,7 +106,7 @@ namespace client_server
 		
 		public string GetConnectedPlayerName()
 		{
-			return basicChat.GetConnectedPlayerNick();
+			return multiplayerHandler.GetConnectedPlayerNick();
 		}
 		
 		public ArrayList GetPlayersNicks()
@@ -117,7 +114,7 @@ namespace client_server
 			ArrayList nicks = new ArrayList();
 			foreach (string name in RHRMultiplayerHandler.sFoundName)
 			{
-				nicks.Add(basicChat.RetrievePlayerNick(name));
+				nicks.Add(multiplayerHandler.RetrievePlayerNick(name));
 			}
 			
 			return nicks;
@@ -130,9 +127,9 @@ namespace client_server
 		
 		public string FoundNameToNick(string foundName)
 		{
-			return basicChat.RetrievePlayerNick(foundName);	
+			return multiplayerHandler.RetrievePlayerNick(foundName);	
 		}
 	
-		RHRMultiplayerHandler basicChat;
+		RHRMultiplayerHandler multiplayerHandler;
 	}
 }
