@@ -61,15 +61,14 @@ function OnTriggerEnter (other : Collider) {
 }
 
 function exploImpl (other : Collider) {
-	if (other.transform.position.y < transform.position.y)
-		return;
-	
-	var explosionCenter = other.transform.position;
-	explosionCenter.y = collider.transform.position.y;
-	collider.attachedRigidbody.AddExplosionForce(500.0, explosionCenter, 3.0, 0.3);
-	
-	wasHit = true;
-	hitTime = Time.time;
+	if(other.CompareTag("Player")) {
+		var explosionCenter = other.transform.position;
+		explosionCenter.y = collider.transform.position.y;
+		collider.attachedRigidbody.AddExplosionForce(100.0, explosionCenter, 3.0, 0.3);
+		
+		wasHit = true;
+		hitTime = Time.time;
+	}
 }
 
 function myImpl (other : Collider) {
