@@ -53,7 +53,7 @@ function updateMyImpl () {
 function OnTriggerEnter (other : Collider) {
 	exploImpl(other);
 	//myImpl(other);
-	var controller : PlayerMoveScript = other.GetComponent(PlayerMoveScript);
+	var controller : PlayerMoveSingle = other.GetComponent(PlayerMoveSingle);
 	if (controller != null) {
 		controller.SlowDown(transform.rigidbody.mass);
 	}

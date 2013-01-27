@@ -15,6 +15,11 @@ var targetPoints = new List.<Vector3>();
 // czy maja byc rysowane w scenie linie ulatwiajace debugowanie
 var debugDraw = true;
 
+// liczba punktow trasy, do ktorych gracz jeszcze nie doszedl,
+// a ktore chcialby znac
+private var knownPathPointsCount = 10;
+
+
 // RUCH WZDLUZ TRASY
 
 // poczatkowy kierunek, w ktorym zwrocony jest gracz
@@ -48,17 +53,6 @@ private var vSpeed = Vector3.zero;
 // czy osiagnal szczyt podczas skoku
 private var jumpingReachedApex = false;
 
-
-// UNIKI
-
-// Enumerator sluzacy do opisu, czy postac jest w trakcie uniku i jesli tak,
-// to w ktora strone unika
-enum DodgeState {
-	Straight,
-	Left,
-	Right
-}
-
 // maksymalny zasieg uniku
 var maxDodgeRange = 2.0;
 // zasieg aktualnego uniku
@@ -87,10 +81,10 @@ function Start () {
 }
 
 function Update () {
-	if (!HasAnyTarget()) {
+	if (targetPoints.Count <= 1) {
 		return;
 	}
-
+	
 	if (IsJumping() && IsTouchingGround()) {
 		isJumping = false;
 		SendMessage("DidLand", SendMessageOptions.DontRequireReceiver);
@@ -122,10 +116,9 @@ function Update () {
 	Move(moveBonus);
 	playerStatus.AddPoints(Time.deltaTime);
 	playerStatus.AddBonusPoints(moveBonus);
-}
-
-function HasAnyTarget() : boolean {
-	return targetPoints.Count > 1;
+	if (targetPoints.Count < knownPathPointsCount) {
+		SendMessage("SendNextPoints");
+	}
 }
 
 // Aktualizacja listy kolejnych punktow sciezki
