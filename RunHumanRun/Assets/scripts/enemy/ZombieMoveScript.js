@@ -77,10 +77,6 @@ function Update () {
 		SendMessage("DidLand", SendMessageOptions.DontRequireReceiver);
 	}
 	
-	if (CanJump()) {
-		//Jump();
-	}
-	
 	Move();
 }
 
