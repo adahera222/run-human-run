@@ -6,7 +6,7 @@
 #pragma strict
 
 import System.Collections.Generic;
-import client_server;
+import rhr_multi;
 
 // Klasa przechowujaca informacje o kladce tworzacej sciezke,
 // po ktorej biegnie gracz
@@ -242,11 +242,11 @@ function SendData(positions: Vector3[], padsStates: PadState[]) {
 	} else {
 		var data: double[] = PathStateRaw.Pack(padsStates, positions);
 		
-		var clientServerObj = GameObject.Find("AllJoynClientServer");
+		var clientServerObj = GameObject.Find("ClientServer");
 		if (clientServerObj == null) {
 			Debug.LogError("EnvGenScript: unable to find second player proxy");
 		} else {
-			var clientServer = clientServerObj.GetComponent("AllJoynClientServer") as AllJoynClientServer;
+			var clientServer = clientServerObj.GetComponent("ClientServer") as ClientServer;
 			Debug.Log("CS: " + clientServer);
 			clientServer.SendUpdateState(data);
 		}

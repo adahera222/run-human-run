@@ -1,7 +1,7 @@
 #pragma strict
 
 import System.Collections.Generic;
-import client_server;
+import rhr_multi;
 
 enum MultiplayerState {
 	InitState,
@@ -44,7 +44,7 @@ var playerButtonWidth = 100;
 var maxConnectTime = 4.0;
 private var currentConnectTime = 0.0;
 
-private var clientServer: AllJoynClientServer;
+private var clientServer: ClientServer;
 private var buttonSize = 75;
 
 private var gameManager: GameManager;
@@ -96,10 +96,10 @@ function InitState () {
 			settingsState = MultiplayerState.FindGameState;
 			selectedPlayer = "";
 			
-			var clientServerObject = GameObject.Find("AllJoynClientServer");
-			clientServer = clientServerObject.GetComponent("AllJoynClientServer") as AllJoynClientServer;
+			var clientServerObject = GameObject.Find("ClientServer");
+			clientServer = clientServerObject.GetComponent("ClientServer") as ClientServer;
 			if (clientServer == null)
-				Debug.LogError("allJoynClientServer is null in MultiplayerSettings");
+				Debug.LogError("clientServer is null in MultiplayerSettings");
 			clientServer.Init(playerNick);
 		} else {
 			displayMsgTimeLeft = displayMsgTime;
@@ -121,8 +121,8 @@ function FindGameState () {
 		return;
 	}
 	
-	if (clientServer.GetChatText() != null) {
-		GUI.TextArea(new Rect (0, 0, Screen.width, (Screen.height / 2)), clientServer.GetChatText());
+	if (clientServer.GetDebugText() != null) {
+		GUI.TextArea(new Rect (0, 0, Screen.width, (Screen.height / 2)), clientServer.GetDebugText());
 	}
 	var i = 0;
 	var xStart = (Screen.height / 2)+10+ ((i++) * buttonSize);
