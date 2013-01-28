@@ -245,6 +245,7 @@ namespace rhr_multi
 		public double[] GetEnvData()
 		{
 			mutex.WaitOne();
+			Debug.Log ("GETENVDATA");
 			double[] data = envBuffer;
 			envBuffer = new double[0];
 			mutex.ReleaseMutex();
@@ -255,7 +256,7 @@ namespace rhr_multi
 		public void AddEnvData(double[] newData)
 		{
 			mutex.WaitOne();
-			
+			Debug.Log ("ADDENVDATA");
 			double[] tmpBuffer = new double[envBuffer.Length + newData.Length];
 			for (int i = 0; i < envBuffer.Length; i++)
 			{
