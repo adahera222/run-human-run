@@ -118,7 +118,7 @@ function Update () {
 		Dodge(DodgeState.Right);
 	}
 	
-	var moveBonus = mobileInputController.GetMoveBonus();
+	var moveBonus = mobileInputController.GetMoveBonus() + playerStatus.GetMoveBonus();
 	Move(moveBonus);
 	playerStatus.AddPoints(Time.deltaTime);
 	playerStatus.AddBonusPoints(moveBonus);

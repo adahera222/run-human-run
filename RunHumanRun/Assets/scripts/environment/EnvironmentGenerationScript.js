@@ -8,6 +8,12 @@
 import System.Collections.Generic;
 import rhr_multi;
 
+enum ObstacleType {
+	Slow,
+	Speed,
+	Points
+}
+
 // Klasa przechowujaca informacje o kladce tworzacej sciezke,
 // po ktorej biegnie gracz
 public class PathPad extends System.ValueType {
@@ -32,12 +38,14 @@ public class Obstacle extends System.ValueType {
     public var Rotation: Quaternion;
     public var Prefab: Transform;
     public var Pad: Transform;
+    public var Type: ObstacleType;
     
-	public function Obstacle(pos:Vector3, rot:Quaternion, pre:Transform, pad:Transform) {
+	public function Obstacle(pos:Vector3, rot:Quaternion, pre:Transform, pad:Transform, type: ObstacleType) {
 		this.Position = pos;
 		this.Rotation = rot;
 		this.Prefab = pre;
 		this.Pad = pad;
+		this.Type = type;
 	}
 }
 
@@ -267,6 +275,7 @@ function GenerateObstacles(pad: PathPad) : ObstacleState[] {
 	var obsLength: float;
 	var translation: Vector3;
 	var position: Vector3;
+	var obsType: int;
 	
 	obstacles = new ObstacleState[obstaclesPerPad];
 	for (var i = 0; i < obstaclesPerPad; i++) {
@@ -275,6 +284,7 @@ function GenerateObstacles(pad: PathPad) : ObstacleState[] {
 		obsWidth = obstaclePref.transform.lossyScale.x;
 		obsHeight = obstaclePref.transform.lossyScale.y;
 		obsLength = obstaclePref.transform.lossyScale.z;
+		obsType = Random.Range(0, System.Enum.GetValues(ObstacleType).Length);
 		
 		translation = Vector3(0.0, 0.0, 0.0);
 		translation.x = Random.Range((-padWidth + obsWidth) / 2.0, (padWidth - obsWidth) / 2.0);
@@ -284,8 +294,8 @@ function GenerateObstacles(pad: PathPad) : ObstacleState[] {
 		translation = pad.Rotation * translation;
 		position = pad.Position + translation;
 		
-		pad.Obstacles.Add(new Obstacle(position, pad.Rotation, obstaclePref, pad.Prefab));
-		obstacles[i] = ObstacleState(j, position);
+		pad.Obstacles.Add(new Obstacle(position, pad.Rotation, obstaclePref, pad.Prefab, obsType));
+		obstacles[i] = ObstacleState(j, position, obsType);
 	}
 	
 	return obstacles;

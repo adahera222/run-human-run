@@ -270,8 +270,9 @@ function GenerateObstacles(pad: PathPad, obstaclesStates: ObstacleState[]) {
 	for (obstState in obstaclesStates) {
 		obstaclePref = obstaclesPrefabs[obstState.ObstacleType];
 		if (meGenerating) {
-			Instantiate(obstaclePref, obstState.Position, pad.Rotation);
+			var obj = Instantiate(obstaclePref, obstState.Position, pad.Rotation);
+			obj.gameObject.tag = System.Enum.ToObject(ObstacleType, obstState.Type).ToString();
 		}
-		pad.Obstacles.Add(new Obstacle(obstState.Position, pad.Rotation, obstaclePref, pad.Prefab));
+		pad.Obstacles.Add(new Obstacle(obstState.Position, pad.Rotation, obstaclePref, pad.Prefab, obstState.Type));
 	}
 }

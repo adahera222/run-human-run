@@ -51,24 +51,30 @@ function updateMyImpl () {
 }
 
 function OnTriggerEnter (other : Collider) {
-	exploImpl(other);
-	//myImpl(other);
-	var controller : PlayerMoveScript = other.GetComponent(PlayerMoveScript);
-	if (controller != null) {
-		controller.SlowDown(transform.rigidbody.mass);
+	if(other.CompareTag("Player")) {
+		exploImpl(other);
+		//myImpl(other);
+		if (collider.CompareTag("Slow")) {
+			var controller : PlayerMoveScript = other.GetComponent(PlayerMoveScript);
+			if (controller != null) {
+				controller.SlowDown(transform.rigidbody.mass);
+			}
+		} else if (collider.CompareTag("Speed")) {
+			other.GetComponent(ThirdPersonStatus).AddMoveBonus(300);
+		}
+		else if (collider.CompareTag("Points")) {
+			other.GetComponent(ThirdPersonStatus).AddPoints(10);
+		}
 	}
-	
 }
 
 function exploImpl (other : Collider) {
-	if(other.CompareTag("Player")) {
-		var explosionCenter = other.transform.position;
-		explosionCenter.y = collider.transform.position.y;
-		collider.attachedRigidbody.AddExplosionForce(500.0, explosionCenter, 3.0, 0.3);
-		
-		wasHit = true;
-		hitTime = Time.time;
-	}
+	var explosionCenter = other.transform.position;
+	explosionCenter.y = collider.transform.position.y;
+	collider.attachedRigidbody.AddExplosionForce(500.0, explosionCenter, 3.0, 0.3);
+	
+	wasHit = true;
+	hitTime = Time.time;
 }
 
 function myImpl (other : Collider) {

@@ -226,6 +226,6 @@ function GenerateObstacles(pad: PathPad) {
 		position = pad.Position + translation;
 		
 		Instantiate(obstaclePref, position, pad.Rotation);
-		pad.Obstacles.Add(new Obstacle(position, pad.Rotation, obstaclePref, pad.Prefab));
+		pad.Obstacles.Add(new Obstacle(position, pad.Rotation, obstaclePref, pad.Prefab, Random.Range(0, System.Enum.GetValues(ObstacleType).Length)));
 	}
 }

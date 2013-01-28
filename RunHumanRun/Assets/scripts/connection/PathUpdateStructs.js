@@ -139,15 +139,18 @@ public class PadState extends System.ValueType {
 public class ObstacleState extends System.ValueType {
 	public var ObstacleType: int;
 	public var Position: Vector3;
+	public var Type: int;
 	
 	public function ObstacleState(data: double[]) {
 		this.ObstacleType = data[1];
 		this.Position = Vector3(data[2], data[3], data[4]);
+		this.Type = data[5];
 	}
 	
-	public function ObstacleState(obstacleType: int, position: Vector3) {
+	public function ObstacleState(obstacleType: int, position: Vector3, type: int) {
 		this.ObstacleType = obstacleType;
 		this.Position = position;
+		this.Type = type;
 	}
 }
 
