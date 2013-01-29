@@ -20,7 +20,4 @@ RunHumanRun/Temp
 *.sln
 RunHumanRun/build
 RunHumanRun/obj
-*.meta
-*.suo
-*.userprefs
 ############
