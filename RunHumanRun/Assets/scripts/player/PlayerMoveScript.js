@@ -4,7 +4,6 @@
 
 import System.Collections.Generic;
 
-
 // TRASA
 
 // punkt sciezki, do ktorego w danej chwili dazy gracz

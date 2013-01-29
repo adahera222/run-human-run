@@ -55,6 +55,11 @@ private var jumpingReachedApex = false;
 
 private var isJumping = false;
 
+// ZOMBIE
+
+private var zombieAccelerationTime: float = 128.0f;
+private var zombieSpeedMax: float = 2.0f;
+
 /*****************************************************************************/
 /*****************************************************************************/
 
