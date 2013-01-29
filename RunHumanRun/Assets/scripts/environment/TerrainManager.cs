@@ -5,12 +5,12 @@ using Utility;
 public class TerrainManager : MonoBehaviour {
 	
 	public GameObject playerGameObject;
-	public GameObject referenceTerrain;
+	public Transform referenceTerrain;
 	public int TERRAIN_BUFFER_COUNT = 50;
 	public int spread = 1;
 	
 	private int[] currentTerrainID;
-	private GameObject[] terrainBuffer;
+	private Transform[] terrainBuffer;
 	private DoubleKeyDictionary<int, int, int> terrainUsage;
 	//private DoubleKeyDictionary<int, int, TerrainData> terrainUsageData;
 	private BitArray usedTiles;
@@ -22,7 +22,7 @@ public class TerrainManager : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		currentTerrainID = new int[2];
-		terrainBuffer = new GameObject[TERRAIN_BUFFER_COUNT];
+		terrainBuffer = new Transform[TERRAIN_BUFFER_COUNT];
 		terrainUsage = new DoubleKeyDictionary<int, int, int>();
 		//terrainUsageData = new DoubleKeyDictionary<int, int, TerrainData>();
 		usedTiles = new BitArray(TERRAIN_BUFFER_COUNT, false);
@@ -38,9 +38,10 @@ public class TerrainManager : MonoBehaviour {
 			//TerrainData tData = new TerrainData();
 			//CopyTerrainDataFromTo(referenceTerrain.terrainData, ref tData);
 			//terrainBuffer[i] = Terrain.CreateTerrainGameObject(tData).GetComponent<Terrain>();
-			terrainBuffer[i] = GameObject.CreatePrimitive(PrimitiveType.Cube);
-			terrainBuffer[i].transform.localScale = new Vector3(referenceSize.x, 1, referenceSize.y);
-			terrainBuffer[i].SetActive(false);
+			//terrainBuffer[i] = GameObject.CreatePrimitive(PrimitiveType.Cube);
+			terrainBuffer[i] = (Transform)Instantiate(referenceTerrain);
+			terrainBuffer[i].localScale = new Vector3(referenceSize.x, 1, referenceSize.y);
+			terrainBuffer[i].gameObject.SetActive(false);
 		}
 	}
 	
@@ -130,7 +131,7 @@ public class TerrainManager : MonoBehaviour {
 				if(usedTiles[i] && !touchedTiles[i])
 				{
 					usedTiles[i] = false;
-					terrainBuffer[i].SetActive(false);
+					terrainBuffer[i].gameObject.SetActive(false);
 				}
 			}
 		}
@@ -139,12 +140,12 @@ public class TerrainManager : MonoBehaviour {
 	void ActivateUsedTile(int i, int j)
 	{
 		terrainBuffer[terrainUsage[i, j]].
-			transform.position = new Vector3(  	referencePosition.x + i * referenceSize.x,
+			transform.position = new Vector3(  referencePosition.x + i * referenceSize.x,
 													referencePosition.y,
 													referencePosition.z + j * referenceSize.y);
-		terrainBuffer[terrainUsage[i, j]].transform.rotation = referenceRotation;
-		terrainBuffer[terrainUsage[i, j]].transform.localScale = new Vector3(referenceSize.x, 1, referenceSize.y);
-		terrainBuffer[terrainUsage[i, j]].SetActive(true);
+		terrainBuffer[terrainUsage[i, j]].rotation = referenceRotation;
+		terrainBuffer[terrainUsage[i, j]].localScale = new Vector3(referenceSize.x, 1, referenceSize.y);
+		terrainBuffer[terrainUsage[i, j]].gameObject.SetActive(true);
 		
 		//terrainBuffer[terrainUsage[i, j]].terrainData = terrainUsageData[i, j];
 	}

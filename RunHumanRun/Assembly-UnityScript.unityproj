@@ -74,7 +74,11 @@
      <Compile Include="Assets\scripts\single\PlayerMoveSingle.js" />
      <Compile Include="Assets\scripts\single\ThirdPersonPlayerAnimationSingle.js" />
      <Compile Include="Assets\scripts\single\ZombieAnimationSingle.js" />
+     <None Include="Assets\Standard Assets\Water (Pro Only)\Water4\Sources\Shaders\FX-SimpleWater4.shader" />
      <None Include="Assets\Plugins\Android\AndroidManifest.xml" />
+     <None Include="Assets\Standard Assets\Water (Pro Only)\Sources\Shaders\FX-Water.shader" />
+     <None Include="Assets\Standard Assets\Water (Pro Only)\Water4\Sources\Shaders\WaterInclude.cginc" />
+     <None Include="Assets\Standard Assets\Water (Pro Only)\Water4\Sources\Shaders\FX-Water4.shader" />
  <Reference Include="alljoyn_unity">
  <HintPath>Assets\Plugins\alljoyn_unity.dll</HintPath>
  </Reference>

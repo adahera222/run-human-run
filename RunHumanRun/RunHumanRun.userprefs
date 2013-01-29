@@ -1,10 +1,13 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\scripts\enemy\ZombieMoveScript.js">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\scripts\environment\TerrainManager.cs">
     <Files>
-      <File FileName="Assets\scripts\player\PlayerMoveScript.js" Line="72" Column="31" />
-      <File FileName="Assets\scripts\camera\CameraMoveScript.js" Line="80" Column="4" />
+      <File FileName="Assets\scripts\player\PlayerMoveScript.js" Line="78" Column="42" />
+      <File FileName="Assets\scripts\camera\CameraMoveScript.js" Line="1" Column="1" />
       <File FileName="Assets\scripts\enemy\ZombieMoveScript.js" Line="113" Column="69" />
+      <File FileName="Assets\scripts\environment\EnvironmentGenerationScript.js" Line="116" Column="27" />
+      <File FileName="Assets\scripts\connection\ProxyEnvironmentGenerator.js" Line="217" Column="14" />
+      <File FileName="Assets\scripts\environment\TerrainManager.cs" Line="143" Column="1" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
