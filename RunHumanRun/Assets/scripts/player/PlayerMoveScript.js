@@ -72,6 +72,8 @@ private var currentDodgeState = DodgeState.Straight;
 
 private var isJumping = false;
 
+private var gameManager: GameManager;
+
 /*****************************************************************************/
 /*****************************************************************************/
 
@@ -84,43 +86,111 @@ function Awake () {
 function Start () {
 	var playerStatus : ThirdPersonStatus = GetComponent(ThirdPersonStatus);
 	playerStatus.SetUp();
+	var gameManagerObj = GameObject.Find("GameManager");
+	gameManager = gameManagerObj.GetComponent("GameManager") as GameManager;
 }
 
 function Update () {
 	if (!HasAnyTarget()) {
 		return;
 	}
+	var playerInput = GetPlayerInput();
 
 	if (IsJumping() && IsTouchingGround()) {
 		isJumping = false;
 		SendMessage("DidLand", SendMessageOptions.DontRequireReceiver);
 	}
 
-	if (Input.GetKeyDown(KeyCode.J) && CanJump()) {
+	if (playerInput.isJumping && CanJump()) {
 		Jump();
 	}
-	if (Input.GetKeyDown(KeyCode.Q) && CanDodge()) {
+	if (playerInput.isDodgingLeft && CanDodge()) {
 		Dodge(DodgeState.Left);
-	} else if (Input.GetKeyDown(KeyCode.E) && CanDodge()) {
+	} else if (playerInput.isDodgingRight && CanDodge()) {
 		Dodge(DodgeState.Right);
 	}
 	
 	var mobileInputController : MobileInputController = GetComponent(MobileInputController);
 	var playerStatus : ThirdPersonStatus = GetComponent(ThirdPersonStatus);
 	
-	if (mobileInputController.shouldJump() && CanJump()) {
+	var mobileJump = mobileInputController.shouldJump();
+	var mobileDodgeLeft = mobileInputController.shouldDodgeLeft();
+	var mobileDodgeRight = mobileInputController.shouldDodgeRight();
+	
+	if (mobileJump && CanJump()) {
 		Jump();
 	}
-	if (mobileInputController.shouldDodgeLeft() && CanDodge()) {
+	if (mobileDodgeLeft && CanDodge()) {
 		Dodge(DodgeState.Left);
-	} else if (mobileInputController.shouldDodgeRight() && CanDodge()) {
+	} else if (mobileDodgeRight && CanDodge()) {
 		Dodge(DodgeState.Right);
+	}
+	
+	var mobilePlayerInput = PlayerInputState(mobileJump, mobileDodgeLeft, mobileDodgeRight);
+	var mergedPlayerInput = playerInput.Merge(mobilePlayerInput);
+	
+	if (ShouldSendInput(mergedPlayerInput)) {
+		SendInput(mergedPlayerInput);
 	}
 	
 	var moveBonus = mobileInputController.GetMoveBonus();
 	Move(moveBonus);
 	playerStatus.AddPoints(Time.deltaTime);
 	playerStatus.AddBonusPoints(moveBonus);
+}
+
+function GetPlayerInput() : PlayerInputState {
+	if (ShouldGetInputDirectly()) {
+		var isJumping = Input.GetKeyDown(KeyCode.J);
+		var isDodgingLeft = Input.GetKeyDown(KeyCode.Q);
+		var isDodgingRight = Input.GetKeyDown(KeyCode.E);
+		var input = PlayerInputState(isJumping, isDodgingLeft, isDodgingRight);
+		return input;
+		
+	} else if (ShouldGenerateInput()) {
+		return GenerateInput();
+		
+	} else { // ShouldGetInputFromServer
+		return gameManager.GetEnemyInput();
+	}
+}
+
+function SendInput(input: PlayerInputState) {
+	Debug.Log("Send nonempty input = " + input.isJumping + "|" + input.isDodgingLeft + "|" + input.isDodgingRight);
+	var clientServerObj = GameObject.Find("ClientServer");
+	if (clientServerObj == null) {
+		Debug.LogError("PlayerMoveScript: unable to find second player proxy");
+	} else {
+		var clientServer = clientServerObj.GetComponent("ClientServer") as ClientServer;
+		var packed = PlayerInputState.Pack(input.isJumping, input.isDodgingLeft, input.isDodgingRight);
+		clientServer.SendPlayerInput(packed);
+	}
+}
+
+function ShouldSendInput(input: PlayerInputState) : boolean {
+	return ShouldGetInputDirectly() &&
+			   !gameManager.IsSinglePlayerGame() &&
+			   input != PlayerInputState.Empty();
+}
+
+// Czy pobrac wejscie bezposrednio od gracza
+function ShouldGetInputDirectly() : boolean {
+	return !ShouldGenerateInput() && !ShouldGetInputFromServer();
+}
+
+// Czy pobrac wejscie od postaci sterowanej przez komputer
+function ShouldGenerateInput() : boolean {
+	return gameManager.IsSinglePlayerGame() && gameManager.IsComputerControlled(gameObject);
+}
+
+// Czy pobrac wejscie od polaczonego gracza
+function ShouldGetInputFromServer() : boolean {
+	return !gameManager.IsSinglePlayerGame() && gameManager.IsDummyPlayer(gameObject);
+}
+
+// Wejscie od postaci sterowanej przez komputer
+function GenerateInput() : PlayerInputState {
+	return PlayerInputState(true, false, false);
 }
 
 function HasAnyTarget() : boolean {

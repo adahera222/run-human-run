@@ -37,7 +37,6 @@ function Awake() {
 
 function Start() {
 	Init();
-	//var playerStatus = transform.gameObject.GetComponent("ThirdPersonStatus") as ThirdPersonStatus;
 }
 
 function Init() {
@@ -213,7 +212,6 @@ function GeneratePad(padState: PadState, next: Vector3) {
 	var position = border + trans * (newElement.lossyScale.z / 2) + padOffset;
 	var rotation: Quaternion = (trans != Vector3.zero) ? Quaternion.LookRotation(trans) : Quaternion.identity;
 	if (meGenerating) {
-		Debug.Log("PAD at " + position);
 		Instantiate(newElement, position, rotation);
 	}
 	var pad = new PathPad(position, rotation, newElement);
@@ -225,11 +223,7 @@ function GeneratePad(padState: PadState, next: Vector3) {
 //skasowac ewentualne losowanie
 // Wygenerowanie nowych kladek, jesli sa potrzebne
 function GeneratePads (padStates: PadState[], positions: Vector3[]) {
-	Debug.Log("Generate Pads");
 	var currentPad = 0;
-	for (var i = 0; i < positions.Length; i++) {
-		//Debug.Log("Pos["+i+"] = " + positions[i]);
-	}
 	if (positions.Length > 0) {
 		for (position in positions) {
 			if (ShouldGeneratePad(position)) {

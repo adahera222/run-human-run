@@ -6,11 +6,13 @@ namespace rhr_multi
 {
 	public class ClientServer : MonoBehaviour
 	{
-		
 		private bool isWorking = false;
 		private string playerNick = "";
 		// domyslnie nr gracza to 1, jak dolacza do sesji, staje sie graczem nr 2
 		private int playerNr = 1;
+		
+		ArrayList envBuffer = new ArrayList();
+		double[] playerInput = new double[0];
 		
 		public string GetDebugText()
 		{
@@ -22,13 +24,17 @@ namespace rhr_multi
 			DontDestroyOnLoad(this);
 		}
 	
-	    void Update()
+	    void LateUpdate()
 		{
 			if (!isWorking)
 				return;
 	        if (Input.GetKeyDown(KeyCode.Escape)) {
 				multiplayerHandler.CloseDown();
 				Application.Quit();
+			}
+			if (HasAnythingToSend())
+			{
+				SendData();
 			}
 		}
 		
@@ -41,14 +47,51 @@ namespace rhr_multi
 			multiplayerHandler = new RHRMultiplayerHandler(playerNick);
 		}
 		
+		public void SendData()
+		{
+			double[] buffer = (envBuffer.Count > 0) ? (double[])envBuffer[0] : new double[0];
+			multiplayerHandler.SendData(playerInput, buffer);
+			
+			if (envBuffer.Count > 0)
+			{
+				envBuffer.RemoveAt(0);
+			}
+			playerInput = new double[0];
+		}
+		
+		public bool HasAnythingToSend()
+		{
+			return envBuffer.Count > 0 || playerInput.Length > 0;
+		}
+		
+		public bool HasAnyData()
+		{
+			return HasEnvData() || HasEnemyInput();	
+		}
+		
 		public bool HasEnvData()
 		{
-			return multiplayerHandler.HasEnvData();	
+			return multiplayerHandler.HasEnvData();
 		}
 		
 		public double[] GetEnvData()
 		{
 			return multiplayerHandler.GetEnvData();	
+		}
+		
+		public void SendPlayerInput(double[] pState)
+		{
+			playerInput = pState;
+		}
+		
+		public bool HasEnemyInput()
+		{
+			return multiplayerHandler.HasEnemyInput();
+		}
+		
+		public double[] GetEnemyInput()
+		{
+			return multiplayerHandler.GetEnemyInput();
 		}
 		
 		public bool IsDuringGame()
@@ -63,14 +106,16 @@ namespace rhr_multi
 		
 		public void SendUpdateState(double[] state)
 		{
-			Debug.Log ("ClientServer: SHOULD sent data to P2");
-			multiplayerHandler.SendDoubleArray(state);
+			envBuffer.Add(state);
 		}
 		
 		public int GetPlayerNr()
 		{
-			return playerNr;	
+			return playerNr;
 		}
+		
+		
+		// FUNKCJE ZWIAZANE Z NAWIAZYWANIEM POLACZENIA itp.
 		
 		public bool isAllJoynStarted()
 		{

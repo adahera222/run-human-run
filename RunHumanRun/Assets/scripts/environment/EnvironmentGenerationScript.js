@@ -218,28 +218,13 @@ function UpdatePath(positions: Vector3[]) {
 }
 
 function SendData(positions: Vector3[], padsStates: PadState[]) {
-	var proxy = GetComponent(ProxyEnvironmentGenerator) as ProxyEnvironmentGenerator;
-	if (proxy == null) {
-		Debug.LogError("EnvGenScript: unable to find first player proxy");
-	}
-	proxy.UpdateState(padsStates, positions);
+	gameManager.GetFirstProxy().UpdateState(padsStates, positions);
 	
+	gameManager.GetSecondProxy().CopyPrefabs(pathPrefabs, obstaclesPrefabs);
+	gameManager.GetSecondProxy().Init();
+	gameManager.GetSecondProxy().UpdateState(padsStates, positions);
 	
-	if (singlePlayerMode) {
-		var secondPlayer = gameManager.GetEnemy();
-		if (secondPlayer == null) {
-			Debug.LogError("EnvGenScript: unable to find second player");
-		} else {
-			var secondProxy = secondPlayer.GetComponent(ProxyEnvironmentGenerator) as ProxyEnvironmentGenerator;
-			if (secondProxy == null) {
-				Debug.LogError("EnvGenScript: unable to find second player proxy");
-			} else {
-				secondProxy.CopyPrefabs(pathPrefabs, obstaclesPrefabs);
-				secondProxy.Init();
-				secondProxy.UpdateState(padsStates, positions);
-			}
-		}
-	} else {
+	if (!singlePlayerMode) {
 		var data: double[] = PathStateRaw.Pack(padsStates, positions);
 		
 		var clientServerObj = GameObject.Find("ClientServer");

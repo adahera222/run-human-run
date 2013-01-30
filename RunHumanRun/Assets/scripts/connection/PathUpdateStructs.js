@@ -67,7 +67,7 @@ public class PathStateRaw extends System.ValueType {
 		var padsCount: int = data[padsCountIndex];
 		var pointsCountIndex = padsCountIndex + DoublesPerPad * padsCount + 1;
 		var pointsCount: int = data[pointsCountIndex];
-		var obstaclesCountIndex = padsCountIndex + DoublesPerPoint * pointsCount + 1;
+		var obstaclesCountIndex = pointsCountIndex + DoublesPerPoint * pointsCount + 1;
 		var obstaclesCount: int = data[obstaclesCountIndex];
 		
 		var expectedSize = 1 + padsCount * DoublesPerPad +
@@ -78,8 +78,11 @@ public class PathStateRaw extends System.ValueType {
 			Debug.LogWarning("PathStateRaw.Validate(): expected size != size");
 			Debug.Log("size = " + size + " != " + expectedSize + " = expected size");
 			Debug.Log("Pads count: " + padsCount);
+			Debug.Log("Pads count index: " + padsCountIndex);
 			Debug.Log("Points count: " + pointsCount);
-			Debug.Log("Obst count: " + (size - (2 + 3 * pointsCount + 1 * padsCount)) / DoublesPerObstacle);
+			Debug.Log("Points count index: " + pointsCountIndex);
+			Debug.Log("Obst count: " + obstaclesCount);
+			Debug.Log("Obst count index: " + obstaclesCountIndex);
 		} else {
 			Debug.Log("PathStateRaw.Validate(): validated");
 		}
@@ -173,7 +176,7 @@ public class ObstacleState extends System.ValueType {
 	}
 }
 
-
+/*
 function Start () {
 
 }
@@ -181,3 +184,4 @@ function Start () {
 function Update () {
 
 }
+*/

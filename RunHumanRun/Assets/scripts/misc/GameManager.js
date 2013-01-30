@@ -15,6 +15,8 @@ private var clientServer: ClientServer;
 
 private var log = "";
 
+private var enemyInput: PlayerInputState; 
+
 function Awake() {
 	var clientServerObj = GameObject.Find("ClientServer");
 	if (clientServerObj == null) {
@@ -24,6 +26,7 @@ function Awake() {
 		isSinglePlayer = false;
 		clientServer = clientServerObj.GetComponent("ClientServer") as ClientServer;
 		playerNr = clientServer.GetPlayerNr();
+		Debug.Log("Starting MULTI as player nr " + playerNr);
 	}
 	StartGame();
 }
@@ -32,23 +35,48 @@ function Start () {
 	log = "Player pos: " + GetPlayer().transform.position + "\n" + log;
 }
 
+// do debugowania
 function GetLog() {
 	return log;
 }
 
-// do debugowania
-function Update () {
-	if (!IsSinglePlayerGame() && clientServer.HasEnvData())
-	{
-		var data = clientServer.GetEnvData();
-		var tmp = "";
-		for (var i = 0; i < 15; i ++) {
-			tmp = tmp + "d[" + i + "]=" + data[i] + " | ";
-			if (i % 5 == 4)
-				log = tmp + "\n" + log;
+// LateUpdate poniewaz trzeba wysylac dopiero po aktualizacji
+// stanu gracza
+function LateUpdate () {
+	if (!IsSinglePlayerGame()) {
+		if (!AmIHuman()) {
+			// pobierane punkty wygenerowane w jednej iteracji, a moze byc
+			// kilka iteracji "zaleglych"
+			while (clientServer.HasEnvData()) {
+					var data = clientServer.GetEnvData();
+					
+					GetFirstProxy().UpdateState(data);
+					GetSecondProxy().UpdateState(data);
+			}
 		}
-		GetFirstProxy().UpdateState(data);
+		
+		if (clientServer.HasEnemyInput()) {
+			var tmpInput = clientServer.GetEnemyInput();
+			DebugLogData(tmpInput);
+			enemyInput = PlayerInputState(tmpInput);
+		} else {
+			enemyInput = PlayerInputState.Empty();
+		}
 	}
+}
+
+function GetEnemyInput() : PlayerInputState {
+	return enemyInput;
+}
+
+function DebugLogData(data: double[]) {
+	var tmp = "";
+	if (data.Length > 0) {
+		tmp = "d[0]=" + data[0] + "; d[1]" + data[1] + "; d[2]" + data[2] + "\n";
+	} else {
+		tmp = "empty\n";
+	}
+	log = tmp + log;
 }
 
 function GetPlayerNr(nr: int) : int {
@@ -63,7 +91,8 @@ function NextRound() {
 	roundNr += 1;
 }
 
-// uzyteczne jedynie w trybie multi
+// przyjmuje zalozenie, ze funkcja odwoluje sie z perspektywy gracza-czlowieka,
+// dlatego trzeba uwazac w pojedynczego gracza
 function AmIHuman() : boolean {
 	return roundNr % 2 == playerNr % 2;
 }
@@ -97,10 +126,26 @@ function IsObjGenerating(obj: GameObject) : boolean {
 	}
 }
 
+function IsComputerControlled(obj: GameObject) : boolean {
+	if (isSinglePlayer) {
+		return (roundNr % 2 == 1 && obj == GetZombie()) || (roundNr % 2 == 0 && obj == GetHuman());
+	} else {
+		return false;
+	}
+}
+
+function IsDummyPlayer(obj: GameObject) : boolean {
+	return obj == GetEnemy();
+}
+
 function IsProxyObjGenerating(obj: GameObject) : boolean {
 	return obj == GetHuman();
 }
 
 function GetFirstProxy() : ProxyEnvironmentGenerator {
 	return GetHuman().GetComponent("ProxyEnvironmentGenerator") as ProxyEnvironmentGenerator;
+}
+
+function GetSecondProxy() : ProxyEnvironmentGenerator {
+	return GetZombie().GetComponent("ProxyEnvironmentGenerator") as ProxyEnvironmentGenerator;
 }
