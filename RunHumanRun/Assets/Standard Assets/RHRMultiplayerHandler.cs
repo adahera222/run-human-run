@@ -44,6 +44,155 @@ namespace rhr_multi
 		private double[] enemyInput = new double[0];
 		private static Mutex mutex = new Mutex();
        
+		
+		public RHRMultiplayerHandler(string nick)
+		{
+			playerNick = nick;
+			StartUp();
+		}
+		
+		public void Start()
+		{
+			// Obiekt uruchamiany w scenie ladujacej ustawienia multiplayera,
+			// a potem uzywany w scenie poscigu
+			DontDestroyOnLoad(this);
+		}
+		
+		// Funkcja przekazujaca obiektowi dane do wyslania
+		public void SendData(double[] playerInput, double[] envData)
+		{
+			if (currentSessionId != 0) {
+				testObj.SendData(playerInput, envData);	
+			}
+		}
+		
+		// Setter, getter i funkcja sprawdzajaca obecnosc bufora danych otoczenia
+		public double[] GetEnvData()
+		{
+			mutex.WaitOne();
+			if (envBuffers.Count == 0)
+			{
+				mutex.ReleaseMutex();
+				return new double[0];
+			}
+			double[] data = (double[])envBuffers[0];
+			envBuffers.RemoveAt(0);
+			mutex.ReleaseMutex();
+			
+			return data;
+		}
+		
+		public void AddEnvData(double[] newData)
+		{
+			mutex.WaitOne();
+			envBuffers.Add (newData);
+			
+			mutex.ReleaseMutex();
+		}
+		
+		public bool HasEnvData()
+		{
+			mutex.WaitOne();
+			int envLength = envBuffers.Count;
+			mutex.ReleaseMutex();
+			
+			return envLength > 0;	
+		}
+		
+		// Setter, getter i funkcja sprawdzajaca obecnosc wejscia przeciwnika
+		public double[] GetEnemyInput()
+		{
+			mutex.WaitOne();
+			double[] tmp = enemyInput;
+			enemyInput = new double[0];
+			mutex.ReleaseMutex();
+			
+			return tmp;	
+		}
+		
+		public void SetEnemyInput(double[] enemyInput)
+		{
+			mutex.WaitOne();
+			Debug.Log("SetEnemyInput");
+			this.enemyInput = enemyInput;
+			mutex.ReleaseMutex();
+		}
+		
+		public bool HasEnemyInput()
+		{
+			mutex.WaitOne();
+			int enemyInputLength = enemyInput.Length;
+			mutex.ReleaseMutex();
+			
+			return enemyInputLength > 0;
+		}
+		
+		
+		// FUNKCJE POMOCNICZE
+		
+		public bool IsDuringGame()
+		{
+			return isDuringGame;
+		}
+		
+		public void GameStarted()
+		{
+			isDuringGame	= true;
+		}
+		
+		public void GameEnded()
+		{
+			isDuringGame = false;	
+		}
+		
+		public string RetrievePlayerNick(string advertisedName)
+			{
+			int delimiterIndex = advertisedName.IndexOf("._") + 2 +
+												msgBus.GlobalGUIDString.Length;
+			return advertisedName.Substring(delimiterIndex);
+		}
+		
+		public void SetConnectedPlayerNick(string nick)
+		{
+			connectedPlayerNick = nick;
+		}
+		
+		public string GetConnectedPlayerNick()
+		{
+			return connectedPlayerNick;
+		}
+		
+		
+		// FUNKCJE OBSLUGUJACE WIADOMOSCI
+		// OTRZYMYWANE OD DRUGIEGO GRACZA
+		
+		public void ChatSignalHandler(AllJoyn.InterfaceDescription.Member member, string srcPath, AllJoyn.Message message)
+		{
+			Debug.Log("Client Chat msg - : "+ message[0]);
+			debugText = "Client Chat msg: ("+message[0]+ ")\n" + debugText;
+		}
+		
+		public void VectorSignalHandler(AllJoyn.InterfaceDescription.Member member, string srcPath, AllJoyn.Message message)
+		{
+			double[] enemyInput = (double[])message[0];
+			double[] envData = (double[])message[1];
+			
+			if (enemyInput.Length > 0)
+			{
+				Debug.Log("VSH: enemy Input not empty");	
+				SetEnemyInput(enemyInput);
+			}
+			if (envData.Length > 0)
+			{
+				AddEnvData(envData);
+			}
+		}
+		
+		// KLASY POMOCNICZE
+		// DZIEDZICZACE PO KLASACH Z ALLJOYNA W CELU
+		// DOSTARCZENIA FUNKCJI CHARAKTERYSTYCZNYCH DLA TEJ GRY
+		
+		// KLASA WYSYLAJACA WIADOMOSCI
 		class TestBusObject : AllJoyn.BusObject
 		{
 			private AllJoyn.InterfaceDescription.Member chatMember;
@@ -214,107 +363,12 @@ namespace rhr_multi
 			}
 		}
 		
-		public RHRMultiplayerHandler(string nick)
-		{
-			playerNick = nick;
-			StartUp();
-		}
 		
-		public bool IsDuringGame()
-		{
-			return isDuringGame;
-		}
 		
-		public void GameStarted()
-		{
-			isDuringGame	= true;
-		}
+		// FUNKCJE ODPOWIADAJACE ZA URUCHAMIANIE ALLJOYNA,
+		// DOLACZANIE DO SESJI Z INNYM GRACZEM,
+		// KONCZENIE SESJI ORAZ WYLACZANIE ALLJOYNA
 		
-		public void GameEnded()
-		{
-			isDuringGame = false;	
-		}
-		
-		public string RetrievePlayerNick(string advertisedName)
-			{
-			int delimiterIndex = advertisedName.IndexOf("._") + 2 +
-												msgBus.GlobalGUIDString.Length;
-			return advertisedName.Substring(delimiterIndex);
-		}
-		
-		public void SetConnectedPlayerNick(string nick)
-		{
-			connectedPlayerNick = nick;
-		}
-		
-		public string GetConnectedPlayerNick()
-		{
-			return connectedPlayerNick;
-		}
-		
-		public void Start()
-		{
-			DontDestroyOnLoad(this);
-		}
-		
-		public double[] GetEnvData()
-		{
-			mutex.WaitOne();
-			if (envBuffers.Count == 0)
-			{
-				mutex.ReleaseMutex();
-				return new double[0];
-			}
-			double[] data = (double[])envBuffers[0];
-			envBuffers.RemoveAt(0);
-			mutex.ReleaseMutex();
-			
-			return data;
-		}
-		
-		public void AddEnvData(double[] newData)
-		{
-			mutex.WaitOne();
-			envBuffers.Add (newData);
-			
-			mutex.ReleaseMutex();
-		}
-		
-		public bool HasEnvData()
-		{
-			mutex.WaitOne();
-			int envLength = envBuffers.Count;
-			mutex.ReleaseMutex();
-			
-			return envLength > 0;	
-		}
-		
-		public double[] GetEnemyInput()
-		{
-			mutex.WaitOne();
-			double[] tmp = enemyInput;
-			enemyInput = new double[0];
-			mutex.ReleaseMutex();
-			
-			return tmp;	
-		}
-		
-		public bool HasEnemyInput()
-		{
-			mutex.WaitOne();
-			int enemyInputLength = enemyInput.Length;
-			mutex.ReleaseMutex();
-			
-			return enemyInputLength > 0;
-		}
-		
-		public void SetEnemyInput(double[] enemyInput)
-		{
-			mutex.WaitOne();
-			Debug.Log("SetEnemyInput");
-			this.enemyInput = enemyInput;
-			mutex.ReleaseMutex();
-		}
 		
 		public void StartUp()
 		{
@@ -354,7 +408,6 @@ namespace rhr_multi
 				
 				if(status)
 				{
-				
 					status = msgBus.Start();
 					if(status)
 					{
@@ -490,50 +543,6 @@ namespace rhr_multi
 			}
 			
 			Debug.Log("Completed ChatService Constructor");
-		}
-		
-		public void ChatSignalHandler(AllJoyn.InterfaceDescription.Member member, string srcPath, AllJoyn.Message message)
-		{
-			Debug.Log("Client Chat msg - : "+ message[0]);
-			debugText = "Client Chat msg: ("+message[0]+ ")\n" + debugText;
-		}
-		
-		public void VectorSignalHandler(AllJoyn.InterfaceDescription.Member member, string srcPath, AllJoyn.Message message)
-		{
-			double[] enemyInput = (double[])message[0];
-			double[] envData = (double[])message[1];
-			
-			if (enemyInput.Length > 0)
-			{
-				Debug.Log("VSH: enemy Input not empty");	
-				SetEnemyInput(enemyInput);
-			}
-			if (envData.Length > 0)
-			{
-				AddEnvData(envData);
-			}
-		}
-		
-		public void SendTheMsg(string msg) {
-			if(currentSessionId != 0) {
-				testObj.SendChatSignal(msg);
-			}
-		}
-		
-		public void SendDoubleArray(double[] data) {
-			if (currentSessionId != 0) {
-				testObj.SendArraySignal(data);
-			}
-		}
-		
-		public void SendData(double[] playerInput, double[] envData) {
-			if (envData.Length > 0)
-			{
-				Debug.Log("RHR: Send playerInput " + playerInput);
-			}
-			if (currentSessionId != 0) {
-				testObj.SendData(playerInput, envData);	
-			}
 		}
 		
 		public bool JoinSession(string session)

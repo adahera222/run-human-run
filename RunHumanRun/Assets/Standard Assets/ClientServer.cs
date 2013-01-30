@@ -14,11 +14,6 @@ namespace rhr_multi
 		ArrayList envBuffer = new ArrayList();
 		double[] playerInput = new double[0];
 		
-		public string GetDebugText()
-		{
-			return RHRMultiplayerHandler.debugText;	
-		}
-		
 		void Start()
 		{
 			DontDestroyOnLoad(this);
@@ -38,6 +33,8 @@ namespace rhr_multi
 			}
 		}
 		
+		// Inicjacja klienta - serwera, uruchamiana przed rozpoczeciem
+		// szukania graczy do gry przez siec
 		public void Init(string nick)
 		{
 			isWorking = true;
@@ -47,6 +44,7 @@ namespace rhr_multi
 			multiplayerHandler = new RHRMultiplayerHandler(playerNick);
 		}
 		
+		// Wysyla dane i czysci bufory
 		public void SendData()
 		{
 			double[] buffer = (envBuffer.Count > 0) ? (double[])envBuffer[0] : new double[0];
@@ -69,19 +67,32 @@ namespace rhr_multi
 			return HasEnvData() || HasEnemyInput();	
 		}
 		
-		public bool HasEnvData()
+		// Zapisuje wejscie gracza i wysle je przy najblizszym obiegu petli
+		public void SendPlayerInput(double[] pState)
 		{
-			return multiplayerHandler.HasEnvData();
+			playerInput = pState;
 		}
 		
+		// Getter, setter ("adder"), sprawdzacz obecnosci danych otoczenia
 		public double[] GetEnvData()
 		{
 			return multiplayerHandler.GetEnvData();	
 		}
 		
-		public void SendPlayerInput(double[] pState)
+		public void SendUpdateState(double[] state)
 		{
-			playerInput = pState;
+			envBuffer.Add(state);
+		}
+		
+		public bool HasEnvData()
+		{
+			return multiplayerHandler.HasEnvData();
+		}
+		
+		// Getter, sprawdzacz obecnosci wejscia przeciwnika
+		public double[] GetEnemyInput()
+		{
+			return multiplayerHandler.GetEnemyInput();
 		}
 		
 		public bool HasEnemyInput()
@@ -89,9 +100,10 @@ namespace rhr_multi
 			return multiplayerHandler.HasEnemyInput();
 		}
 		
-		public double[] GetEnemyInput()
+		// FUNKCJE POMOCNICZE
+		public int GetPlayerNr()
 		{
-			return multiplayerHandler.GetEnemyInput();
+			return playerNr;
 		}
 		
 		public bool IsDuringGame()
@@ -104,16 +116,10 @@ namespace rhr_multi
 			multiplayerHandler.GameStarted();	
 		}
 		
-		public void SendUpdateState(double[] state)
+		public string GetDebugText()
 		{
-			envBuffer.Add(state);
+			return RHRMultiplayerHandler.debugText;	
 		}
-		
-		public int GetPlayerNr()
-		{
-			return playerNr;
-		}
-		
 		
 		// FUNKCJE ZWIAZANE Z NAWIAZYWANIEM POLACZENIA itp.
 		
