@@ -18,9 +18,17 @@ private var log = "";
 function Awake() {
 	var clientServerObj = GameObject.Find("ClientServer");
 	if (clientServerObj == null) {
+		(GetZombie().GetComponent("ZombieMoveScript") as ZombieMoveScript).enabled = true;
+		(GetZombie().GetComponent("PlayerMoveScript") as PlayerMoveScript).enabled = false;
+		(GetZombie().GetComponent("MobileInputController") as MobileInputController).enabled = false;
+		(GetZombie().GetComponent("CharacterController") as CharacterController).stepOffset = 5.0f;
 		isSinglePlayer = true;
 		playerNr = 1;
 	} else {
+		(GetZombie().GetComponent("ZombieMoveScript") as ZombieMoveScript).enabled = false;
+		(GetZombie().GetComponent("PlayerMoveScript") as PlayerMoveScript).enabled = true;
+		(GetZombie().GetComponent("MobileInputController") as MobileInputController).enabled = true;
+		(GetZombie().GetComponent("CharacterController") as CharacterController).stepOffset = 0.3f;
 		isSinglePlayer = false;
 		clientServer = clientServerObj.GetComponent("ClientServer") as ClientServer;
 		playerNr = clientServer.GetPlayerNr();

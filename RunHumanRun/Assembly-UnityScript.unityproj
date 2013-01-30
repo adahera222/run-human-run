@@ -37,10 +37,10 @@
     <Reference Include="System.XML" />
 	<Reference Include="System.Core" />
 	<Reference Include="UnityEngine">
-	  <HintPath>C:/Program Files/Unity/Editor/Data/Managed/UnityEngine.dll</HintPath>
+	  <HintPath>C:/Program Files (x86)/Unity/Editor/Data/Managed/UnityEngine.dll</HintPath>
 	</Reference>
 	<Reference Include="UnityEditor">
-	  <HintPath>C:/Program Files/Unity/Editor/Data/Managed/UnityEditor.dll</HintPath>
+	  <HintPath>C:/Program Files (x86)/Unity/Editor/Data/Managed/UnityEditor.dll</HintPath>
 	</Reference>
   </ItemGroup>
   <ItemGroup>
@@ -49,6 +49,8 @@
      <Compile Include="Assets\scripts\camera\ObservatorCameraScript.js" />
      <Compile Include="Assets\scripts\connection\PathUpdateStructs.js" />
      <Compile Include="Assets\scripts\connection\ProxyEnvironmentGenerator.js" />
+     <Compile Include="Assets\scripts\enemy\ZombieCollisionScript.js" />
+     <Compile Include="Assets\scripts\enemy\ZombieMoveScript.js" />
      <Compile Include="Assets\scripts\environment\EnvironmentGenerationScript.js" />
      <Compile Include="Assets\scripts\environment\ObstacleCollisionScript.js" />
      <Compile Include="Assets\scripts\environment\PathGenerator.js" />
@@ -64,6 +66,14 @@
      <Compile Include="Assets\scripts\player\PlayerMoveScript.js" />
      <Compile Include="Assets\scripts\player\ThirdPersonPlayerAnimation.js" />
      <Compile Include="Assets\scripts\player\ThirdPersonStatus.js" />
+     <Compile Include="Assets\scripts\single\CameraMoveSingle.js" />
+     <Compile Include="Assets\scripts\single\EnviromentGenerationSingle.js" />
+     <Compile Include="Assets\scripts\single\ObservatorCameraSingle.js" />
+     <Compile Include="Assets\scripts\single\ObstacleCollisionSingle.js" />
+     <Compile Include="Assets\scripts\single\PathGeneratorSingle.js" />
+     <Compile Include="Assets\scripts\single\PlayerMoveSingle.js" />
+     <Compile Include="Assets\scripts\single\ThirdPersonPlayerAnimationSingle.js" />
+     <Compile Include="Assets\scripts\single\ZombieAnimationSingle.js" />
      <None Include="Assets\Plugins\Android\AndroidManifest.xml" />
  <Reference Include="alljoyn_unity">
  <HintPath>Assets\Plugins\alljoyn_unity.dll</HintPath>

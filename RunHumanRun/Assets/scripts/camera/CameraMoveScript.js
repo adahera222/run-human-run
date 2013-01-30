@@ -1,5 +1,14 @@
 #pragma strict
 
+// INTRO
+
+// czy intro jest jeszcze odtwarzane
+var introPlaying = true;
+var introLookAtZombieTime: float;
+var introTurnStateTime: float;
+private var lookAtZombieAngle: float = 180f;
+private var introTime: float;
+private var stepTurnOverAngle: float;
 
 private var player: Transform;
 
@@ -24,6 +33,9 @@ private var gameManager: GameManager;
 
 
 function Start () {
+	lookAtZombieAngle = 180f;
+	introTime = introLookAtZombieTime + introTurnStateTime;
+	stepTurnOverAngle = lookAtZombieAngle / introTurnStateTime;
 	var gameManagerObj = GameObject.Find("GameManager");
 	gameManager = gameManagerObj.GetComponent("GameManager") as GameManager;
 	player = gameManager.GetPlayer().transform;
@@ -58,5 +70,16 @@ function LateUpdate () {
 	}
 	
 	transform.Translate(offset + Vector3(0, headJump * Mathf.Sin(angle), 0));
-	transform.Rotate(inclineAngle, 0, 0);
+	if (introPlaying) {
+		if (Time.time < introLookAtZombieTime) {
+			transform.Rotate(inclineAngle, lookAtZombieAngle, 0);
+		} else if (Time.time < introTime) {
+			transform.Rotate(inclineAngle, stepTurnOverAngle*(introTime-Time.time), 0);
+		} else {
+			introPlaying = false;	
+			
+		}
+	} else {
+		transform.Rotate(inclineAngle, 0, 0);
+	}
 }

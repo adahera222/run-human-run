@@ -4,7 +4,6 @@
 
 import System.Collections.Generic;
 
-
 // TRASA
 
 // punkt sciezki, do ktorego w danej chwili dazy gracz
@@ -94,6 +93,7 @@ function Update () {
 	if (IsJumping() && IsTouchingGround()) {
 		isJumping = false;
 		SendMessage("DidLand", SendMessageOptions.DontRequireReceiver);
+		Land();
 	}
 
 	if (Input.GetKeyDown(KeyCode.J) && CanJump()) {
@@ -117,7 +117,7 @@ function Update () {
 		Dodge(DodgeState.Right);
 	}
 	
-	var moveBonus = mobileInputController.GetMoveBonus();
+	var moveBonus = mobileInputController.GetMoveBonus() + playerStatus.GetMoveBonus();
 	Move(moveBonus);
 	playerStatus.AddPoints(Time.deltaTime);
 	playerStatus.AddBonusPoints(moveBonus);
@@ -217,18 +217,6 @@ function SlowDown(obstacleMass: float) {
 	var totalMass = obstacleMass + transform.rigidbody.mass;
 	var slowFactor = (transform.rigidbody.mass / totalMass) / hitPenealty;
 	speed = slowFactor * speed;
-}
-
-// Wykrywane jest, czy kontroler koliduje z podlozem. Jesli tak, to predkosc
-// pozioma jest zerowana.
-function OnControllerColliderHit (hit : ControllerColliderHit) {
-	if (hit.controller.collisionFlags) {
-		Land();
-	}
-	
-	// celem debugowania
-	if (hit.gameObject.name != "PathPadPrefab(Clone)")
-		Debug.Log("HIT FROM BOTTOM: " + hit.gameObject.name);
 }
 
 // RUCH W PIONIE
