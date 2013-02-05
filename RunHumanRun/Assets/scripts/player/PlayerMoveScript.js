@@ -110,29 +110,15 @@ function Update () {
 		Dodge(DodgeState.Right);
 	}
 	
-	var mobileInputController : MobileInputController = GetComponent(MobileInputController);
+	if (ShouldSendInput(playerInput)) {
+		SendInput(playerInput);
+	}
+	if (ShouldSendPos()) {
+		SendPos();
+	}
+	
 	var playerStatus : ThirdPersonStatus = GetComponent(ThirdPersonStatus);
-	
-	var mobileJump = mobileInputController.shouldJump();
-	var mobileDodgeLeft = mobileInputController.shouldDodgeLeft();
-	var mobileDodgeRight = mobileInputController.shouldDodgeRight();
-	
-	if (mobileJump && CanJump()) {
-		Jump();
-	}
-	if (mobileDodgeLeft && CanDodge()) {
-		Dodge(DodgeState.Left);
-	} else if (mobileDodgeRight && CanDodge()) {
-		Dodge(DodgeState.Right);
-	}
-	
-	var mobilePlayerInput = PlayerInputState(mobileJump, mobileDodgeLeft, mobileDodgeRight);
-	var mergedPlayerInput = playerInput.Merge(mobilePlayerInput);
-	
-	if (ShouldSendInput(mergedPlayerInput)) {
-		SendInput(mergedPlayerInput);
-	}
-	
+	var mobileInputController : MobileInputController = GetComponent(MobileInputController);
 	var moveBonus = mobileInputController.GetMoveBonus();
 	Move(moveBonus);
 	playerStatus.AddPoints(Time.deltaTime);
@@ -141,11 +127,12 @@ function Update () {
 
 function GetPlayerInput() : PlayerInputState {
 	if (ShouldGetInputDirectly()) {
-		var isJumping = Input.GetKeyDown(KeyCode.J);
-		var isDodgingLeft = Input.GetKeyDown(KeyCode.Q);
-		var isDodgingRight = Input.GetKeyDown(KeyCode.E);
-		var input = PlayerInputState(isJumping, isDodgingLeft, isDodgingRight);
-		return input;
+		// jednoczesna obsluga dla klawiatury i telefonu
+		var mobileInputController : MobileInputController = GetComponent(MobileInputController);
+		var isJumping = Input.GetKeyDown(KeyCode.J) || mobileInputController.shouldJump();
+		var isDodgingLeft = Input.GetKeyDown(KeyCode.Q) || mobileInputController.shouldDodgeLeft();
+		var isDodgingRight = Input.GetKeyDown(KeyCode.E) ||  mobileInputController.shouldDodgeRight();
+		return  PlayerInputState(isJumping, isDodgingLeft, isDodgingRight);
 		
 	} else if (ShouldGenerateInput()) {
 		return GenerateInput();
@@ -171,6 +158,25 @@ function ShouldSendInput(input: PlayerInputState) : boolean {
 	return ShouldGetInputDirectly() &&
 			   !gameManager.IsSinglePlayerGame() &&
 			   input != PlayerInputState.Empty();
+}
+
+function SendPos() {
+	var clientServerObj = GameObject.Find("ClientServer");
+	if (clientServerObj == null) {
+		Debug.LogError("PlayerMoveScript: unable to find second player proxy");
+	} else {
+		var clientServer = clientServerObj.GetComponent("ClientServer") as ClientServer;
+		var pos = new double[3];
+		pos[0] = transform.position[0];
+		pos[1] = transform.position[1];
+		pos[2] = transform.position[2];
+		clientServer.SendPlayerPos(pos);
+	}
+}
+
+function ShouldSendPos() : boolean {
+	return !gameManager.IsSinglePlayerGame() &&
+			   !gameManager.IsDummyPlayer(gameObject);
 }
 
 // Czy pobrac wejscie bezposrednio od gracza

@@ -42,6 +42,7 @@ namespace rhr_multi
 		
 		private ArrayList envBuffers = new ArrayList();
 		private double[] enemyInput = new double[0];
+		private double[] enemyPos = new double[0];
 		private static Mutex mutex = new Mutex();
        
 		
@@ -59,10 +60,10 @@ namespace rhr_multi
 		}
 		
 		// Funkcja przekazujaca obiektowi dane do wyslania
-		public void SendData(double[] playerInput, double[] envData)
+		public void SendData(double[] playerInput, double[] playerPos, double[] envData)
 		{
 			if (currentSessionId != 0) {
-				testObj.SendData(playerInput, envData);	
+				testObj.SendData(playerInput, playerPos, envData);	
 			}
 		}
 		
@@ -127,6 +128,34 @@ namespace rhr_multi
 			return enemyInputLength > 0;
 		}
 		
+		// Setter, getter i funkcja sprawdzajaca obecnosc pozycji przeciwnika
+		public double[] GetEnemyPos()
+		{
+			mutex.WaitOne();
+			double[] tmp = enemyPos;
+			enemyInput = new double[0];
+			mutex.ReleaseMutex();
+			
+			return tmp;	
+		}
+		
+		public void SetEnemyPos(double[] enemyPos)
+		{
+			mutex.WaitOne();
+			Debug.Log("SetEnemyInput");
+			this.enemyPos = enemyPos;
+			mutex.ReleaseMutex();
+		}
+		
+		public bool HasEnemyPos()
+		{
+			mutex.WaitOne();
+			int enemyPosLength = enemyPos.Length;
+			mutex.ReleaseMutex();
+			
+			return enemyPosLength > 0;
+		}
+		
 		
 		// FUNKCJE POMOCNICZE
 		
@@ -175,12 +204,17 @@ namespace rhr_multi
 		public void VectorSignalHandler(AllJoyn.InterfaceDescription.Member member, string srcPath, AllJoyn.Message message)
 		{
 			double[] enemyInput = (double[])message[0];
-			double[] envData = (double[])message[1];
+			double[] enemyPos = (double[])message[1];
+			double[] envData = (double[])message[2];
 			
 			if (enemyInput.Length > 0)
 			{
 				Debug.Log("VSH: enemy Input not empty");	
 				SetEnemyInput(enemyInput);
+			}
+			if (enemyPos.Length > 0)
+			{
+				SetEnemyPos(enemyPos);	
 			}
 			if (envData.Length > 0)
 			{
@@ -230,22 +264,13 @@ namespace rhr_multi
 				}
 			}
 			
-			public void SendArraySignal(double[] data)
+			public void SendData(double[] playerInput, double[] playerPos, double[] envData)
 			{
-				AllJoyn.MsgArgs payload = new AllJoyn.MsgArgs((uint)1);
-				payload[0].Set((double[])data);
-				AllJoyn.QStatus status = Signal(null, currentSessionId, vectorMember, payload, 0, 64);
-				if(!status) {
-					Debug.Log("RHR failed to send vector signal: "+status.ToString());	
-					debugText += "RHR failed to send vector signal: "+status.ToString() + "\n" + debugText;
-				}
-			}
-			
-			public void SendData(double[] playerInput, double[] envData)
-			{
-				AllJoyn.MsgArgs payload = new AllJoyn.MsgArgs((uint)2);
+				AllJoyn.MsgArgs payload = new AllJoyn.MsgArgs((uint)3);
 				payload[0].Set((double[])playerInput);
-				payload[1].Set((double[])envData);
+				payload[1].Set ((double[])playerPos);
+				payload[2].Set((double[])envData);
+				
 				AllJoyn.QStatus status = Signal(null, currentSessionId, vectorMember, payload, 0, 64);
 				if(!status) {
 					Debug.Log("RHR failed to send vector(data) signal: "+status.ToString());	
@@ -385,7 +410,7 @@ namespace rhr_multi
 					debugText = "RHR Interface Created.\n" + debugText;
 					Debug.Log("RHR Interface Created.");
 					testIntf.AddSignal("chat", "s", "msg", 0);
-					testIntf.AddSignal ("vector", "adad", "points", 0);
+					testIntf.AddSignal ("vector", "adadad", "points", 0);
 					testIntf.Activate();
 				}
 				else

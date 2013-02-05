@@ -15,7 +15,9 @@ private var clientServer: ClientServer;
 
 private var log = "";
 
-private var enemyInput: PlayerInputState; 
+private var enemyInput: PlayerInputState;
+
+private var enemyPos: Vector3;
 
 function Awake() {
 	var clientServerObj = GameObject.Find("ClientServer");
@@ -61,6 +63,12 @@ function LateUpdate () {
 			enemyInput = PlayerInputState(tmpInput);
 		} else {
 			enemyInput = PlayerInputState.Empty();
+		}
+		
+		if (clientServer.HasEnemyPos()) {
+			var vec = clientServer.GetEnemyPos();
+			var enemyPos = Vector3(vec[0], vec[1], vec[2]);
+			GetEnemy().transform.position = enemyPos;
 		}
 	}
 }

@@ -13,6 +13,7 @@ namespace rhr_multi
 		
 		ArrayList envBuffer = new ArrayList();
 		double[] playerInput = new double[0];
+		double[] playerPos = new double[0];
 		
 		void Start()
 		{
@@ -48,29 +49,35 @@ namespace rhr_multi
 		public void SendData()
 		{
 			double[] buffer = (envBuffer.Count > 0) ? (double[])envBuffer[0] : new double[0];
-			multiplayerHandler.SendData(playerInput, buffer);
+			multiplayerHandler.SendData(playerInput, playerPos, buffer);
 			
 			if (envBuffer.Count > 0)
 			{
 				envBuffer.RemoveAt(0);
 			}
 			playerInput = new double[0];
+			playerPos = new double[0];
 		}
 		
 		public bool HasAnythingToSend()
 		{
-			return envBuffer.Count > 0 || playerInput.Length > 0;
+			return envBuffer.Count > 0 || playerInput.Length > 0 || playerPos.Length > 0;
 		}
 		
 		public bool HasAnyData()
 		{
-			return HasEnvData() || HasEnemyInput();	
+			return HasEnvData() || HasEnemyInput() || HasEnemyPos();	
 		}
 		
 		// Zapisuje wejscie gracza i wysle je przy najblizszym obiegu petli
 		public void SendPlayerInput(double[] pState)
 		{
 			playerInput = pState;
+		}
+		// Zapisuje pozycje gracza i wysle ja przy najblizszym obiegu petli
+		public void SendPlayerPos(double[] pPos)
+		{
+			playerPos = pPos;
 		}
 		
 		// Getter, setter ("adder"), sprawdzacz obecnosci danych otoczenia
@@ -98,6 +105,17 @@ namespace rhr_multi
 		public bool HasEnemyInput()
 		{
 			return multiplayerHandler.HasEnemyInput();
+		}
+		
+		// Getter, sprawdzacz obecnosci pozycji przeciwnika
+		public double[] GetEnemyPos()
+		{
+			return multiplayerHandler.GetEnemyPos();
+		}
+		
+		public bool HasEnemyPos()
+		{
+			return multiplayerHandler.HasEnemyPos();
 		}
 		
 		// FUNKCJE POMOCNICZE
