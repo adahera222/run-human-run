@@ -28,6 +28,7 @@ var displayMsgTime = 3.0f;
 private var displayMsgTimeLeft = 0.0f;
 
 var missingNickMsg = "Enter your nickname";
+var searchingPlayersMsg = "Searching for available players...";
 
 private var settingsState = MultiplayerState.InitState;
 
@@ -57,6 +58,7 @@ function OnGUI () {
 		ShowBackground();
 		InitState();
 	} else if (settingsState == MultiplayerState.FindGameState) {
+		ShowBackground();
 		FindGameState();
 	} else if (settingsState == MultiplayerState.ConnectState) {
 		ConnectState();
@@ -113,77 +115,29 @@ function InitState () {
 }
 
 function FindGameState () {
-	GUI.skin = null;
-	
 	if (clientServer.IsDuringGame()) {
 		Application.LoadLevel("Chase");
 		settingsState = MultiplayerState.ConnectState;
 		return;
 	}
 	
-	if (clientServer.GetDebugText() != null) {
-		GUI.TextArea(new Rect (0, 0, Screen.width, (Screen.height / 2)), clientServer.GetDebugText());
-	}
+	var sessions = clientServer.GetSessions();
 	var i = 0;
-	var xStart = (Screen.height / 2)+10+ ((i++) * buttonSize);
-	var isAllJoynStarted = clientServer.isAllJoynStarted();
+	var namePos = (Screen.height / 2)+10+ ((i++) * buttonSize);
 	
-	if (isAllJoynStarted) {
-		if (GUI.Button(new Rect(0,xStart,(Screen.width)/3, buttonSize), "STOP ALLJOYN")) {	
-			clientServer.CloseDown();
+	if (sessions.Count > 0) {
+		for (var nameObj in sessions) {
+			var name = nameObj as String;
+			namePos = (Screen.height / 2)+10+((i++) * buttonSize);
+			var nick = clientServer.FoundNameToNick(name) as String;
+			if (GUI.Button(new Rect(10, namePos, (Screen.width-20), buttonSize), nick)) {	
+				clientServer.JoinSession(name);
+			}
 		}
 	}
-	
-	if (clientServer.HasJoinedSession() != null) {
-		if (GUI.Button(new Rect(((Screen.width)/3),xStart,(Screen.width)/3, buttonSize),
-			"Leave \n"+ clientServer.GetConnectedPlayerName())) {
-			clientServer.LeaveSession();
-		}
+	else {
+		GUI.Box(Rect(Screen.width / 4, 100, Screen.width / 2, 110), searchingPlayersMsg);
 	}
-	
-	if (!isAllJoynStarted) {
-		if (GUI.Button(new Rect(((Screen.width)/3)*2,xStart,(Screen.width)/3, buttonSize), "START ALLJOYN")) {	
-			clientServer.StartUp();
-		}
-	}
-	
-	for (var nameObj in clientServer.GetSessions()) {
-		var name = nameObj as String;
-		xStart = (Screen.height / 2)+10+((i++)*buttonSize);
-		var nick = clientServer.FoundNameToNick(name) as String;
-		if (GUI.Button(new Rect(10,xStart,(Screen.width-20), buttonSize), nick)) {	
-			clientServer.JoinSession(name);
-		}
-	}
-	
-	/*
-	msgText = GUI.TextField(new Rect (0, Screen.height-buttonSize, (Screen.width/4) * 3, buttonSize), msgText);
-	if (GUI.Button(new Rect(Screen.width - (Screen.width/4),Screen.height-buttonSize, (Screen.width/4), buttonSize),"Send"))
-	{	
-		ArrayList points = new ArrayList();
-		points.Add(new Vector3(1.0f, 2.0f, 3.0f));
-		points.Add(new Vector3(-1.0f, 0.0f, 200.0f));
-		points.Add(new Vector3(-93.2f, 23.99f, 200.99f));
-		basicChat.SendVector(points);
-		//basicChat.SendTheMsg(msgText);
-	}
-	*/
-	/*
-	var nextItemPosY = 110 + titleHeight;
-	GUI.Label(Rect((Screen.width - playersTex.width) / 2, nextItemPosY, playersTex.width, playersTex.height*2), playersTex);
-	
-	var multiplayerSettings : MultiPlayerSettings = GetComponent(MultiPlayerSettings);
-	var waitingPlayers = multiplayerSettings.GetWaitingPlayers();
-	
-	for (waitingPlayer in waitingPlayers) {
-		nextItemPosY += 100;
-		if (GUI.Button(GetRectForPlayer(nextItemPosY), waitingPlayer)) {
-			selectedPlayer = waitingPlayer;
-			settingsState = MultiplayerState.ConnectState;
-			currentConnectTime = 0.0;
-		}
-	}
-	*/
 }
 
 function ConnectState () {
@@ -195,9 +149,14 @@ function ConnectState () {
 			gameManager = gameManagerObj.GetComponent("GameManager") as GameManager;
 		}
 	}
+	/*
+	// debug, w razie ostatecznosci
 	var logText = (gameManager != null) ? gameManager.GetLog() : "";
 	GUI.TextArea(new Rect (0, 0, Screen.width, (Screen.height / 2)), logText);
-/*	if (currentConnectTime < maxConnectTime) {
+	*/
+	
+	/*
+	if (currentConnectTime < maxConnectTime) {
 		var connectingMsg = "Connecting to\n" + selectedPlayer;
 		GUI.Box(Rect(Screen.width / 4, Screen.height / 2 - 50, Screen.width / 2, 100), connectingMsg);
 	} else if (currentConnectTime < 2 * maxConnectTime) {
@@ -207,7 +166,6 @@ function ConnectState () {
 		selectedPlayer = "";
 		settingsState = MultiplayerState.FindGameState;
 	}
-	
 	currentConnectTime += Time.deltaTime;*/
 }
 

@@ -4,6 +4,7 @@
 
 import System.Collections.Generic;
 
+
 // TRASA
 
 // punkt sciezki, do ktorego w danej chwili dazy gracz
@@ -71,6 +72,8 @@ private var currentDodgeState = DodgeState.Straight;
 
 private var isJumping = false;
 
+private var gameManager: GameManager;
+
 /*****************************************************************************/
 /*****************************************************************************/
 
@@ -83,44 +86,117 @@ function Awake () {
 function Start () {
 	var playerStatus : ThirdPersonStatus = GetComponent(ThirdPersonStatus);
 	playerStatus.SetUp();
+	var gameManagerObj = GameObject.Find("GameManager");
+	gameManager = gameManagerObj.GetComponent("GameManager") as GameManager;
 }
 
 function Update () {
 	if (!HasAnyTarget()) {
 		return;
 	}
+	var playerInput = GetPlayerInput();
 
 	if (IsJumping() && IsTouchingGround()) {
 		isJumping = false;
 		SendMessage("DidLand", SendMessageOptions.DontRequireReceiver);
-		Land();
 	}
 
-	if (Input.GetKeyDown(KeyCode.J) && CanJump()) {
+	if (playerInput.isJumping && CanJump()) {
 		Jump();
 	}
-	if (Input.GetKeyDown(KeyCode.Q) && CanDodge()) {
+	if (playerInput.isDodgingLeft && CanDodge()) {
 		Dodge(DodgeState.Left);
-	} else if (Input.GetKeyDown(KeyCode.E) && CanDodge()) {
+	} else if (playerInput.isDodgingRight && CanDodge()) {
 		Dodge(DodgeState.Right);
 	}
 	
-	var mobileInputController : MobileInputController = GetComponent(MobileInputController);
+	if (ShouldSendInput(playerInput)) {
+		SendInput(playerInput);
+	}
+	if (ShouldSendPos()) {
+		SendPos();
+	}
+	
 	var playerStatus : ThirdPersonStatus = GetComponent(ThirdPersonStatus);
-	
-	if (mobileInputController.shouldJump() && CanJump()) {
-		Jump();
-	}
-	if (mobileInputController.shouldDodgeLeft() && CanDodge()) {
-		Dodge(DodgeState.Left);
-	} else if (mobileInputController.shouldDodgeRight() && CanDodge()) {
-		Dodge(DodgeState.Right);
-	}
-	
-	var moveBonus = mobileInputController.GetMoveBonus() + playerStatus.GetMoveBonus();
+	var mobileInputController : MobileInputController = GetComponent(MobileInputController);
+	var moveBonus = mobileInputController.GetMoveBonus();
 	Move(moveBonus);
 	playerStatus.AddPoints(Time.deltaTime);
 	playerStatus.AddBonusPoints(moveBonus);
+}
+
+function GetPlayerInput() : PlayerInputState {
+	if (ShouldGetInputDirectly()) {
+		// jednoczesna obsluga dla klawiatury i telefonu
+		var mobileInputController : MobileInputController = GetComponent(MobileInputController);
+		var isJumping = Input.GetKeyDown(KeyCode.J) || mobileInputController.shouldJump();
+		var isDodgingLeft = Input.GetKeyDown(KeyCode.Q) || mobileInputController.shouldDodgeLeft();
+		var isDodgingRight = Input.GetKeyDown(KeyCode.E) ||  mobileInputController.shouldDodgeRight();
+		return  PlayerInputState(isJumping, isDodgingLeft, isDodgingRight);
+		
+	} else if (ShouldGenerateInput()) {
+		return GenerateInput();
+		
+	} else { // ShouldGetInputFromServer
+		return gameManager.GetEnemyInput();
+	}
+}
+
+function SendInput(input: PlayerInputState) {
+	Debug.Log("Send nonempty input = " + input.isJumping + "|" + input.isDodgingLeft + "|" + input.isDodgingRight);
+	var clientServerObj = GameObject.Find("ClientServer");
+	if (clientServerObj == null) {
+		Debug.LogError("PlayerMoveScript: unable to find second player proxy");
+	} else {
+		var clientServer = clientServerObj.GetComponent("ClientServer") as ClientServer;
+		var packed = PlayerInputState.Pack(input.isJumping, input.isDodgingLeft, input.isDodgingRight);
+		clientServer.SendPlayerInput(packed);
+	}
+}
+
+function ShouldSendInput(input: PlayerInputState) : boolean {
+	return ShouldGetInputDirectly() &&
+			   !gameManager.IsSinglePlayerGame() &&
+			   input != PlayerInputState.Empty();
+}
+
+function SendPos() {
+	var clientServerObj = GameObject.Find("ClientServer");
+	if (clientServerObj == null) {
+		Debug.LogError("PlayerMoveScript: unable to find second player proxy");
+	} else {
+		var clientServer = clientServerObj.GetComponent("ClientServer") as ClientServer;
+		var pos = new double[3];
+		pos[0] = transform.position[0];
+		pos[1] = transform.position[1];
+		pos[2] = transform.position[2];
+		clientServer.SendPlayerPos(pos);
+	}
+}
+
+function ShouldSendPos() : boolean {
+	return !gameManager.IsSinglePlayerGame() &&
+			   !gameManager.IsDummyPlayer(gameObject);
+}
+
+// Czy pobrac wejscie bezposrednio od gracza
+function ShouldGetInputDirectly() : boolean {
+	return !ShouldGenerateInput() && !ShouldGetInputFromServer();
+}
+
+// Czy pobrac wejscie od postaci sterowanej przez komputer
+function ShouldGenerateInput() : boolean {
+	return gameManager.IsSinglePlayerGame() && gameManager.IsComputerControlled(gameObject);
+}
+
+// Czy pobrac wejscie od polaczonego gracza
+function ShouldGetInputFromServer() : boolean {
+	return !gameManager.IsSinglePlayerGame() && gameManager.IsDummyPlayer(gameObject);
+}
+
+// Wejscie od postaci sterowanej przez komputer
+function GenerateInput() : PlayerInputState {
+	return PlayerInputState(true, false, false);
 }
 
 function HasAnyTarget() : boolean {
@@ -217,6 +293,18 @@ function SlowDown(obstacleMass: float) {
 	var totalMass = obstacleMass + transform.rigidbody.mass;
 	var slowFactor = (transform.rigidbody.mass / totalMass) / hitPenealty;
 	speed = slowFactor * speed;
+}
+
+// Wykrywane jest, czy kontroler koliduje z podlozem. Jesli tak, to predkosc
+// pozioma jest zerowana.
+function OnControllerColliderHit (hit : ControllerColliderHit) {
+	if (hit.controller.collisionFlags) {
+		Land();
+	}
+	
+	// celem debugowania
+	if (hit.gameObject.name != "PathPadPrefab(Clone)")
+		Debug.Log("HIT FROM BOTTOM: " + hit.gameObject.name);
 }
 
 // RUCH W PIONIE
