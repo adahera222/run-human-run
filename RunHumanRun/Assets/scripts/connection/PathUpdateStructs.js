@@ -13,7 +13,7 @@
 public class PathStateRaw extends System.ValueType {
 	public static var DoublesPerPad: int = 1;
 	public static var DoublesPerPoint: int = 3;
-	public static var DoublesPerObstacle: int = 5;
+	public static var DoublesPerObstacle: int = 6;
 	
     public var PadsCount: int;
     public var PointsCount: int;
@@ -54,23 +54,38 @@ public class PathStateRaw extends System.ValueType {
 		var size = CalculateSizeForData(pads, points);
 		var data = new double[size];
 		var i = 0;
-		data[i++] = pads.Length;
 		i = SavePadsTypes(pads, data, i);
-		data[i++] = points.Length;
 		i = SavePoints(points, data, i);
-		SaveObstacles(pads, data, i);
+		i = SaveObstacles(pads, data, i);
 		
 		return data;
 	}
 	
 	public static function Validate(data: double[]) {
 		var size = data.Length;
-		var padsCount: int = data[0];
-		var pointsCount: int = data[padsCount + 1];
-		Debug.Log("SIZE: " + size);
-		Debug.Log("Pads count: " + padsCount);
-		Debug.Log("Points count: " + pointsCount);
-		Debug.Log("Obst count: " + (size - (2 + 3 * pointsCount + 1 * padsCount)) / DoublesPerObstacle);
+		var padsCountIndex = 0;
+		var padsCount: int = data[padsCountIndex];
+		var pointsCountIndex = padsCountIndex + DoublesPerPad * padsCount + 1;
+		var pointsCount: int = data[pointsCountIndex];
+		var obstaclesCountIndex = pointsCountIndex + DoublesPerPoint * pointsCount + 1;
+		var obstaclesCount: int = data[obstaclesCountIndex];
+		
+		var expectedSize = 1 + padsCount * DoublesPerPad +
+										1 + pointsCount * DoublesPerPoint +
+										1 + obstaclesCount * DoublesPerObstacle;
+		
+		if (size != expectedSize) {
+			Debug.LogWarning("PathStateRaw.Validate(): expected size != size");
+			Debug.Log("size = " + size + " != " + expectedSize + " = expected size");
+			Debug.Log("Pads count: " + padsCount);
+			Debug.Log("Pads count index: " + padsCountIndex);
+			Debug.Log("Points count: " + pointsCount);
+			Debug.Log("Points count index: " + pointsCountIndex);
+			Debug.Log("Obst count: " + obstaclesCount);
+			Debug.Log("Obst count index: " + obstaclesCountIndex);
+		} else {
+			Debug.Log("PathStateRaw.Validate(): validated");
+		}
 	}
 	
 	private static function CalculateSizeForData(pads: PadState[], points: Vector3[]) : int {
@@ -80,13 +95,14 @@ public class PathStateRaw extends System.ValueType {
 			size += DoublesPerPad + DoublesPerObstacle * pad.ObstaclesStates.Length;
 		}
 		// dane punktow
-		size += 3 * points.Length;
+		size += DoublesPerPoint * points.Length;
 		
 		return size;
 	}
 	
 	private static function SavePadsTypes(pads: PadState[], data: double[], start: int) : int {
-		var i = start;
+		data[start] = pads.Length;
+		var i = start + 1;
 		for (var pad: PadState in pads) {
 			data[i++] = pad.PadType;
 		}
@@ -94,7 +110,8 @@ public class PathStateRaw extends System.ValueType {
 	}
 	
 	private static function SavePoints(points: Vector3[], data: double[], start: int) : int {
-		var i = start;
+		data[start] = points.Length;
+		var i = start + 1;
 		for (var point: Vector3 in points) {
 			data[i++] = point.x;
 			data[i++] = point.y;
@@ -104,23 +121,32 @@ public class PathStateRaw extends System.ValueType {
 	}
 	
 	private static function SaveObstacles(pads: PadState[], data: double[], start: int) : int {
-		var i = start + 1;
+		data[start] = GetObstaclesCount(pads);
 		var padNr = 0;
-		var obstCount = 0;
+		var i = start + 1;
+		
 		for (var pad: PadState in pads) {
 			for (var obst: ObstacleState in pad.ObstaclesStates) {
-				obstCount += 1;
 				data[i++] = padNr;
 				data[i++] = obst.ObstacleType;
 				data[i++] = obst.Position.x;
 				data[i++] = obst.Position.y;
 				data[i++] = obst.Position.z;
+				data[i++] = obst.Type;
 			}
 			padNr += 1;
 		}
-		data[start] = obstCount;
 		
 		return i;
+	}
+	
+	private static function GetObstaclesCount(pads: PadState[]) : int {
+		var obstCount = 0;
+		for (var pad: PadState in pads) {
+			obstCount += pad.ObstaclesStates.Length;
+		}
+		
+		return obstCount;
 	}
 }
 
@@ -154,7 +180,7 @@ public class ObstacleState extends System.ValueType {
 	}
 }
 
-
+/*
 function Start () {
 
 }
@@ -162,3 +188,4 @@ function Start () {
 function Update () {
 
 }
+*/
