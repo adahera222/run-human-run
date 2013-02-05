@@ -40,17 +40,191 @@ namespace rhr_multi
 		
 		private bool isDuringGame = false;
 		
-		private double[] envBuffer = new double[0];
+		private ArrayList envBuffers = new ArrayList();
+		private double[] enemyInput = new double[0];
+		private double[] enemyPos = new double[0];
 		private static Mutex mutex = new Mutex();
        
+		
+		public RHRMultiplayerHandler(string nick)
+		{
+			playerNick = nick;
+			StartUp();
+		}
+		
+		public void Start()
+		{
+			// Obiekt uruchamiany w scenie ladujacej ustawienia multiplayera,
+			// a potem uzywany w scenie poscigu
+			DontDestroyOnLoad(this);
+		}
+		
+		// Funkcja przekazujaca obiektowi dane do wyslania
+		public void SendData(double[] playerInput, double[] playerPos, double[] envData)
+		{
+			if (currentSessionId != 0) {
+				testObj.SendData(playerInput, playerPos, envData);	
+			}
+		}
+		
+		// Setter, getter i funkcja sprawdzajaca obecnosc bufora danych otoczenia
+		public double[] GetEnvData()
+		{
+			mutex.WaitOne();
+			if (envBuffers.Count == 0)
+			{
+				mutex.ReleaseMutex();
+				return new double[0];
+			}
+			double[] data = (double[])envBuffers[0];
+			envBuffers.RemoveAt(0);
+			mutex.ReleaseMutex();
+			
+			return data;
+		}
+		
+		public void AddEnvData(double[] newData)
+		{
+			mutex.WaitOne();
+			envBuffers.Add (newData);
+			
+			mutex.ReleaseMutex();
+		}
+		
+		public bool HasEnvData()
+		{
+			mutex.WaitOne();
+			int envLength = envBuffers.Count;
+			mutex.ReleaseMutex();
+			
+			return envLength > 0;	
+		}
+		
+		// Setter, getter i funkcja sprawdzajaca obecnosc wejscia przeciwnika
+		public double[] GetEnemyInput()
+		{
+			mutex.WaitOne();
+			double[] tmp = enemyInput;
+			enemyInput = new double[0];
+			mutex.ReleaseMutex();
+			
+			return tmp;	
+		}
+		
+		public void SetEnemyInput(double[] enemyInput)
+		{
+			mutex.WaitOne();
+			this.enemyInput = enemyInput;
+			mutex.ReleaseMutex();
+		}
+		
+		public bool HasEnemyInput()
+		{
+			mutex.WaitOne();
+			int enemyInputLength = enemyInput.Length;
+			mutex.ReleaseMutex();
+			
+			return enemyInputLength > 0;
+		}
+		
+		// Setter, getter i funkcja sprawdzajaca obecnosc pozycji przeciwnika
+		public double[] GetEnemyPos()
+		{
+			mutex.WaitOne();
+			double[] tmp = enemyPos;
+			enemyInput = new double[0];
+			mutex.ReleaseMutex();
+			
+			return tmp;	
+		}
+		
+		public void SetEnemyPos(double[] enemyPos)
+		{
+			mutex.WaitOne();
+			this.enemyPos = enemyPos;
+			mutex.ReleaseMutex();
+		}
+		
+		public bool HasEnemyPos()
+		{
+			mutex.WaitOne();
+			int enemyPosLength = enemyPos.Length;
+			mutex.ReleaseMutex();
+			
+			return enemyPosLength > 0;
+		}
+		
+		
+		// FUNKCJE POMOCNICZE
+		
+		public bool IsDuringGame()
+		{
+			return isDuringGame;
+		}
+		
+		public void GameStarted()
+		{
+			isDuringGame	= true;
+		}
+		
+		public void GameEnded()
+		{
+			isDuringGame = false;	
+		}
+		
+		public string RetrievePlayerNick(string advertisedName)
+			{
+			int delimiterIndex = advertisedName.IndexOf("._") + 2 +
+												msgBus.GlobalGUIDString.Length;
+			return advertisedName.Substring(delimiterIndex);
+		}
+		
+		public void SetConnectedPlayerNick(string nick)
+		{
+			connectedPlayerNick = nick;
+		}
+		
+		public string GetConnectedPlayerNick()
+		{
+			return connectedPlayerNick;
+		}
+		
+		
+		// FUNKCJE OBSLUGUJACE WIADOMOSCI
+		// OTRZYMYWANE OD DRUGIEGO GRACZA
+		
+		public void VectorSignalHandler(AllJoyn.InterfaceDescription.Member member, string srcPath, AllJoyn.Message message)
+		{
+			double[] enemyInput = (double[])message[0];
+			double[] enemyPos = (double[])message[1];
+			double[] envData = (double[])message[2];
+			
+			if (enemyInput.Length > 0)
+			{
+				Debug.Log("VSH: enemy Input not empty");	
+				SetEnemyInput(enemyInput);
+			}
+			if (enemyPos.Length > 0)
+			{
+				SetEnemyPos(enemyPos);	
+			}
+			if (envData.Length > 0)
+			{
+				AddEnvData(envData);
+			}
+		}
+		
+		// KLASY POMOCNICZE
+		// DZIEDZICZACE PO KLASACH Z ALLJOYNA W CELU
+		// DOSTARCZENIA FUNKCJI CHARAKTERYSTYCZNYCH DLA TEJ GRY
+		
+		// KLASA WYSYLAJACA WIADOMOSCI
 		class TestBusObject : AllJoyn.BusObject
 		{
-			private AllJoyn.InterfaceDescription.Member chatMember;
 			private AllJoyn.InterfaceDescription.Member vectorMember;
 			
 			public TestBusObject(AllJoyn.BusAttachment bus, string path) : base(path, false)
 			{
-			
 				AllJoyn.InterfaceDescription exampleIntf = bus.GetInterface(INTERFACE_NAME);
 				AllJoyn.QStatus status = AddInterface(exampleIntf);
 				if(!status)
@@ -59,7 +233,6 @@ namespace rhr_multi
 					Debug.Log("RHR Failed to add interface " + status.ToString());
 				}
 				
-				chatMember = exampleIntf.GetMember("chat");
 				vectorMember = exampleIntf.GetMember("vector");
 			}
 
@@ -70,22 +243,17 @@ namespace rhr_multi
 				Debug.Log("RHR ObjectRegistered has been called");
 			}
 			
-			public void SendChatSignal(string msg) {
-				AllJoyn.MsgArgs payload = new AllJoyn.MsgArgs(1);
-				payload[0].Set(msg);
-				AllJoyn.QStatus status = Signal(null, currentSessionId, chatMember, payload, 0, 64);
-				if(!status) {
-					Debug.Log("RHR failed to send signal: "+status.ToString());	
-				}
-			}
-			
-			public void SendArraySignal(double[] data) {
-				AllJoyn.MsgArgs payload = new AllJoyn.MsgArgs((uint)1);
-				payload[0].Set((double[])data);
+			public void SendData(double[] playerInput, double[] playerPos, double[] envData)
+			{
+				AllJoyn.MsgArgs payload = new AllJoyn.MsgArgs((uint)3);
+				payload[0].Set((double[])playerInput);
+				payload[1].Set ((double[])playerPos);
+				payload[2].Set((double[])envData);
+				
 				AllJoyn.QStatus status = Signal(null, currentSessionId, vectorMember, payload, 0, 64);
 				if(!status) {
-					Debug.Log("RHR failed to send vector signal: "+status.ToString());	
-					debugText += "RHR failed to send vector signal: "+status.ToString() + "\n" + debugText;
+					Debug.Log("RHR failed to send vector(data) signal: "+status.ToString());	
+					debugText += "RHR failed to send vector(data) signal: "+status.ToString() + "\n" + debugText;
 				}
 			}
 		}
@@ -199,86 +367,12 @@ namespace rhr_multi
 			}
 		}
 		
-		public RHRMultiplayerHandler(string nick)
-		{
-			playerNick = nick;
-			StartUp();
-		}
 		
-		public bool IsDuringGame()
-		{
-			return isDuringGame;
-		}
 		
-		public void GameStarted()
-		{
-			isDuringGame	= true;
-		}
+		// FUNKCJE ODPOWIADAJACE ZA URUCHAMIANIE ALLJOYNA,
+		// DOLACZANIE DO SESJI Z INNYM GRACZEM,
+		// KONCZENIE SESJI ORAZ WYLACZANIE ALLJOYNA
 		
-		public void GameEnded()
-		{
-			isDuringGame = false;	
-		}
-		
-		public string RetrievePlayerNick(string advertisedName)
-			{
-			int delimiterIndex = advertisedName.IndexOf("._") + 2 +
-												msgBus.GlobalGUIDString.Length;
-			return advertisedName.Substring(delimiterIndex);
-		}
-		
-		public void SetConnectedPlayerNick(string nick)
-		{
-			connectedPlayerNick = nick;
-		}
-		
-		public string GetConnectedPlayerNick()
-		{
-			return connectedPlayerNick;
-		}
-		
-		public void Start()
-		{
-			DontDestroyOnLoad(this);
-		}
-		
-		public double[] GetEnvData()
-		{
-			mutex.WaitOne();
-			Debug.Log ("GETENVDATA");
-			double[] data = envBuffer;
-			envBuffer = new double[0];
-			mutex.ReleaseMutex();
-			
-			return data;
-		}
-		
-		public void AddEnvData(double[] newData)
-		{
-			mutex.WaitOne();
-			Debug.Log ("ADDENVDATA");
-			double[] tmpBuffer = new double[envBuffer.Length + newData.Length];
-			for (int i = 0; i < envBuffer.Length; i++)
-			{
-				tmpBuffer[i] = envBuffer[i];
-			}
-			for (int i = envBuffer.Length, j = 0; j < newData.Length; i++, j++)
-			{
-				tmpBuffer[i] = newData[j];
-			}
-			envBuffer = tmpBuffer;
-			
-			mutex.ReleaseMutex();
-		}
-		
-		public bool HasEnvData()
-		{
-			mutex.WaitOne();
-			int envLength = envBuffer.Length;
-			mutex.ReleaseMutex();
-			
-			return envLength > 0;	
-		}
 		
 		public void StartUp()
 		{
@@ -292,11 +386,9 @@ namespace rhr_multi
 				status = msgBus.CreateInterface(INTERFACE_NAME, false, out testIntf);
 				if(status)
 				{
-				
 					debugText = "RHR Interface Created.\n" + debugText;
 					Debug.Log("RHR Interface Created.");
-					testIntf.AddSignal("chat", "s", "msg", 0);
-					testIntf.AddSignal ("vector", "ad", "points", 0);
+					testIntf.AddSignal ("vector", "adadad", "points", 0);
 					testIntf.Activate();
 				}
 				else
@@ -308,7 +400,6 @@ namespace rhr_multi
 				busListener = new MyBusListener();
 				if(status)
 				{
-				
 					msgBus.RegisterBusListener(busListener);
 					debugText = "RHR BusListener Registered.\n" + debugText;
 					Debug.Log("RHR BusListener Registered.");
@@ -320,7 +411,6 @@ namespace rhr_multi
 				
 				if(status)
 				{
-				
 					status = msgBus.Start();
 					if(status)
 					{
@@ -361,18 +451,6 @@ namespace rhr_multi
 				
 				myAdvertisedName = SERVICE_NAME+ "._" + msgBus.GlobalGUIDString + playerNick;
 				
-				AllJoyn.InterfaceDescription.Member chatMember = testIntf.GetMember("chat");
-				status = msgBus.RegisterSignalHandler(this.ChatSignalHandler, chatMember, null);
-				if(!status)
-				{
-					debugText ="RHR Failed to add signal handler " + status + "\n" + debugText;
-					Debug.Log("RHR Failed to add signal handler " + status);
-				}
-				else {			
-					debugText ="RHR add signal handler " + status + "\n" + debugText;
-					Debug.Log("RHR add signal handler " + status);
-				}
-				
 				AllJoyn.InterfaceDescription.Member vectorMember = testIntf.GetMember ("vector");
 				status = msgBus.RegisterSignalHandler(this.VectorSignalHandler, vectorMember, null);
 				if(!status)
@@ -384,18 +462,6 @@ namespace rhr_multi
 					debugText ="RHR add vector signal handler " + status + "\n" + debugText;
 					Debug.Log("RHR add vector signal handler " + status);
 				}
-				
-				status = msgBus.AddMatch("type='signal',member='chat'");
-				if(!status)
-				{
-					debugText ="RHR Failed to add Match " + status.ToString() + "\n" + debugText;
-					Debug.Log("RHR Failed to add Match " + status.ToString());
-				}
-				else {			
-					debugText ="RHR add Match " + status.ToString() + "\n" + debugText;
-					Debug.Log("RHR add Match " + status.ToString());
-				}
-				
 				
 				status = msgBus.AddMatch("type='signal',member='vector'");
 				if(!status)
@@ -453,37 +519,6 @@ namespace rhr_multi
 			{
 				debugText = "RHR org.alljoyn.Bus.FindAdvertisedName failed.\n" + debugText;
 				Debug.Log("RHR org.alljoyn.Bus.FindAdvertisedName failed.");
-			}
-			
-			Debug.Log("Completed ChatService Constructor");
-		}
-		
-		public void ChatSignalHandler(AllJoyn.InterfaceDescription.Member member, string srcPath, AllJoyn.Message message)
-		{
-			Debug.Log("Client Chat msg - : "+ message[0]);
-			debugText = "Client Chat msg: ("+message[0]+ ")\n" + debugText;
-		}
-		
-		public void VectorSignalHandler(AllJoyn.InterfaceDescription.Member member, string srcPath, AllJoyn.Message message)
-		{
-			Debug.Log ("VectorSignalHandler: new message");
-			
-			Debug.Log ("AllJoynClientServer: ReceivedUpdateState");
-			double[] state = (double[])message[0];
-			
-			AddEnvData(state);
-		}
-		
-		public void SendTheMsg(string msg) {
-			if(currentSessionId != 0) {
-				testObj.SendChatSignal(msg);
-			}
-		}
-		
-		public void SendDoubleArray(double[] data) {
-			Debug.Log ("SEND VECTOR");
-			if (currentSessionId != 0) {
-				testObj.SendArraySignal(data);
 			}
 		}
 		
@@ -584,14 +619,6 @@ namespace rhr_multi
 			if(!status) {
             	debugText = "Disconnect failed status(" + status.ToString() + ")\n" + debugText;
 				Debug.Log("Disconnect status(" + status.ToString() + ")");
-			}
-			
-			AllJoyn.InterfaceDescription.Member chatMember = testIntf.GetMember("chat");
-			status = msgBus.UnregisterSignalHandler(this.ChatSignalHandler, chatMember, null);
-			chatMember = null;
-			if(!status) {
-            	debugText = "UnregisterSignalHandler failed status(" + status.ToString() + ")\n" + debugText;
-				Debug.Log("UnregisterSignalHandler status(" + status.ToString() + ")");
 			}
 			
 			AllJoyn.InterfaceDescription.Member vectorMember = testIntf.GetMember("vector");
