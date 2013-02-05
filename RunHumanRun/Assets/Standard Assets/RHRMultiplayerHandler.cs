@@ -114,7 +114,6 @@ namespace rhr_multi
 		public void SetEnemyInput(double[] enemyInput)
 		{
 			mutex.WaitOne();
-			Debug.Log("SetEnemyInput");
 			this.enemyInput = enemyInput;
 			mutex.ReleaseMutex();
 		}
