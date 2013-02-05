@@ -52,7 +52,6 @@ public class TerrainManager : MonoBehaviour {
 		TerrainIDFromPosition(ref currentTerrainID, ref warpPosition);
 		
 		string dbgString = "";
-		dbgString = "CurrentID : " + currentTerrainID[0] + ", " + currentTerrainID[1] + "\n\n";
 		for(int i=-spread;i<=spread;i++)
 		{
 			for(int j=-spread;j<=spread;j++)
@@ -61,7 +60,6 @@ public class TerrainManager : MonoBehaviour {
 				dbgString += (currentTerrainID[0] + i) + "," + (currentTerrainID[1] + j) + "\n";
 			}
 		}
-		Debug.Log(dbgString);
 		ReclaimTiles();
 	}
 	

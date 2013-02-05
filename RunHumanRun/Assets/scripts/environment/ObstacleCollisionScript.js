@@ -8,6 +8,8 @@
 var hitSpeed = 5.0;
 var acceleration = 15;
 
+var explo: ParticleEmitter;
+
 private var currentSpeed = Vector3.zero;
 private var targetSpeed: Vector3;
 private var apexReached = false;
@@ -52,17 +54,20 @@ function updateMyImpl () {
 
 function OnTriggerEnter (other : Collider) {
 	if(other.CompareTag("Player")) {
-		exploImpl(other);
 		//myImpl(other);
 		if (collider.CompareTag("Slow")) {
+			exploImpl(other);
 			var controller : PlayerMoveScript = other.GetComponent(PlayerMoveScript);
 			if (controller != null) {
 				controller.SlowDown(transform.rigidbody.mass);
 			}
 		} else if (collider.CompareTag("Speed")) {
+			exploImpl(other);
 			other.GetComponent(ThirdPersonStatus).AddMoveBonus(300);
 		}
 		else if (collider.CompareTag("Points")) {
+			Instantiate(explo, transform.position, transform.rotation);
+			Destroy(gameObject);
 			other.GetComponent(ThirdPersonStatus).AddPoints(10);
 		}
 	}
