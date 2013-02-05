@@ -141,7 +141,6 @@ namespace rhr_multi
 		public void SetEnemyPos(double[] enemyPos)
 		{
 			mutex.WaitOne();
-			Debug.Log("SetEnemyInput");
 			this.enemyPos = enemyPos;
 			mutex.ReleaseMutex();
 		}
@@ -194,12 +193,6 @@ namespace rhr_multi
 		// FUNKCJE OBSLUGUJACE WIADOMOSCI
 		// OTRZYMYWANE OD DRUGIEGO GRACZA
 		
-		public void ChatSignalHandler(AllJoyn.InterfaceDescription.Member member, string srcPath, AllJoyn.Message message)
-		{
-			Debug.Log("Client Chat msg - : "+ message[0]);
-			debugText = "Client Chat msg: ("+message[0]+ ")\n" + debugText;
-		}
-		
 		public void VectorSignalHandler(AllJoyn.InterfaceDescription.Member member, string srcPath, AllJoyn.Message message)
 		{
 			double[] enemyInput = (double[])message[0];
@@ -228,12 +221,10 @@ namespace rhr_multi
 		// KLASA WYSYLAJACA WIADOMOSCI
 		class TestBusObject : AllJoyn.BusObject
 		{
-			private AllJoyn.InterfaceDescription.Member chatMember;
 			private AllJoyn.InterfaceDescription.Member vectorMember;
 			
 			public TestBusObject(AllJoyn.BusAttachment bus, string path) : base(path, false)
 			{
-			
 				AllJoyn.InterfaceDescription exampleIntf = bus.GetInterface(INTERFACE_NAME);
 				AllJoyn.QStatus status = AddInterface(exampleIntf);
 				if(!status)
@@ -242,7 +233,6 @@ namespace rhr_multi
 					Debug.Log("RHR Failed to add interface " + status.ToString());
 				}
 				
-				chatMember = exampleIntf.GetMember("chat");
 				vectorMember = exampleIntf.GetMember("vector");
 			}
 
@@ -251,16 +241,6 @@ namespace rhr_multi
 			
 				debugText = "RHR ObjectRegistered has been called\n" + debugText;
 				Debug.Log("RHR ObjectRegistered has been called");
-			}
-			
-			public void SendChatSignal(string msg)
-			{
-				AllJoyn.MsgArgs payload = new AllJoyn.MsgArgs(1);
-				payload[0].Set(msg);
-				AllJoyn.QStatus status = Signal(null, currentSessionId, chatMember, payload, 0, 64);
-				if(!status) {
-					Debug.Log("RHR failed to send signal: "+status.ToString());	
-				}
 			}
 			
 			public void SendData(double[] playerInput, double[] playerPos, double[] envData)
@@ -408,7 +388,6 @@ namespace rhr_multi
 				{
 					debugText = "RHR Interface Created.\n" + debugText;
 					Debug.Log("RHR Interface Created.");
-					testIntf.AddSignal("chat", "s", "msg", 0);
 					testIntf.AddSignal ("vector", "adadad", "points", 0);
 					testIntf.Activate();
 				}
@@ -472,18 +451,6 @@ namespace rhr_multi
 				
 				myAdvertisedName = SERVICE_NAME+ "._" + msgBus.GlobalGUIDString + playerNick;
 				
-				AllJoyn.InterfaceDescription.Member chatMember = testIntf.GetMember("chat");
-				status = msgBus.RegisterSignalHandler(this.ChatSignalHandler, chatMember, null);
-				if(!status)
-				{
-					debugText ="RHR Failed to add signal handler " + status + "\n" + debugText;
-					Debug.Log("RHR Failed to add signal handler " + status);
-				}
-				else {			
-					debugText ="RHR add signal handler " + status + "\n" + debugText;
-					Debug.Log("RHR add signal handler " + status);
-				}
-				
 				AllJoyn.InterfaceDescription.Member vectorMember = testIntf.GetMember ("vector");
 				status = msgBus.RegisterSignalHandler(this.VectorSignalHandler, vectorMember, null);
 				if(!status)
@@ -495,18 +462,6 @@ namespace rhr_multi
 					debugText ="RHR add vector signal handler " + status + "\n" + debugText;
 					Debug.Log("RHR add vector signal handler " + status);
 				}
-				
-				status = msgBus.AddMatch("type='signal',member='chat'");
-				if(!status)
-				{
-					debugText ="RHR Failed to add Match " + status.ToString() + "\n" + debugText;
-					Debug.Log("RHR Failed to add Match " + status.ToString());
-				}
-				else {			
-					debugText ="RHR add Match " + status.ToString() + "\n" + debugText;
-					Debug.Log("RHR add Match " + status.ToString());
-				}
-				
 				
 				status = msgBus.AddMatch("type='signal',member='vector'");
 				if(!status)
@@ -565,8 +520,6 @@ namespace rhr_multi
 				debugText = "RHR org.alljoyn.Bus.FindAdvertisedName failed.\n" + debugText;
 				Debug.Log("RHR org.alljoyn.Bus.FindAdvertisedName failed.");
 			}
-			
-			Debug.Log("Completed ChatService Constructor");
 		}
 		
 		public bool JoinSession(string session)
@@ -666,14 +619,6 @@ namespace rhr_multi
 			if(!status) {
             	debugText = "Disconnect failed status(" + status.ToString() + ")\n" + debugText;
 				Debug.Log("Disconnect status(" + status.ToString() + ")");
-			}
-			
-			AllJoyn.InterfaceDescription.Member chatMember = testIntf.GetMember("chat");
-			status = msgBus.UnregisterSignalHandler(this.ChatSignalHandler, chatMember, null);
-			chatMember = null;
-			if(!status) {
-            	debugText = "UnregisterSignalHandler failed status(" + status.ToString() + ")\n" + debugText;
-				Debug.Log("UnregisterSignalHandler status(" + status.ToString() + ")");
 			}
 			
 			AllJoyn.InterfaceDescription.Member vectorMember = testIntf.GetMember("vector");
