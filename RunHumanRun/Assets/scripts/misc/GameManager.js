@@ -66,9 +66,9 @@ function LateUpdate () {
 		}
 		
 		if (clientServer.HasEnemyInput()) {
-			var tmpInput = clientServer.GetEnemyInput();
-			DebugLogData(tmpInput);
-			enemyInput = PlayerInputState(tmpInput);
+			var enInput = clientServer.GetEnemyInput();
+			//DebugLogData(tmpInput);
+			enemyInput = PlayerInputState(enInput);
 		} else {
 			enemyInput = PlayerInputState.Empty();
 		}
@@ -81,8 +81,8 @@ function LateUpdate () {
 	}
 }
 
-function GetEnemyInput() : PlayerInputState {
-	return enemyInput;
+function StartGame() {
+	roundNr = 1;
 }
 
 function DebugLogData(data: double[]) {
@@ -95,16 +95,24 @@ function DebugLogData(data: double[]) {
 	log = tmp + log;
 }
 
+function GetEnemyInput() : PlayerInputState {
+	return enemyInput;
+}
+
 function GetPlayerNr(nr: int) : int {
 	return playerNr;
 }
 
-function StartGame() {
-	roundNr = 1;
+function GetRoundNr() : int {
+	return roundNr;
 }
 
 function NextRound() {
 	roundNr += 1;
+}
+
+function IsDuringGame() : boolean{
+	return clientServer.IsDuringGame();
 }
 
 // przyjmuje zalozenie, ze funkcja odwoluje sie z perspektywy gracza-czlowieka,
@@ -164,4 +172,21 @@ function GetFirstProxy() : ProxyEnvironmentGenerator {
 
 function GetSecondProxy() : ProxyEnvironmentGenerator {
 	return GetZombie().GetComponent("ProxyEnvironmentGenerator") as ProxyEnvironmentGenerator;
+}
+
+function GetPlayerNick() : String {
+	return clientServer.GetPlayerNick();
+}
+
+function GetPlayerPoints() : int {
+	var status = GetPlayer().GetComponent("ThirdPersonStatus") as ThirdPersonStatus;
+	return status.GetPoints();
+}
+
+function GetEnemyNick() : String {
+	return clientServer.GetEnemyNick();
+}
+
+function GetEnemyPoints() : int {
+	return -1;
 }

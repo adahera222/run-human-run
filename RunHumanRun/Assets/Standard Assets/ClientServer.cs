@@ -8,6 +8,7 @@ namespace rhr_multi
 	{
 		private bool isWorking = false;
 		private string playerNick = "";
+		private string enemyNick = "";
 		// domyslnie nr gracza to 1, jak dolacza do sesji, staje sie graczem nr 2
 		private int playerNr = 1;
 		
@@ -41,8 +42,19 @@ namespace rhr_multi
 			isWorking = true;
 			playerNick = nick;
 			playerNr = 1;
+			
+			enemyNick = "";
+			envBuffer = new ArrayList();
+			playerInput = new double[0];
+			playerPos = new double[0];
+			
 			multiplayerHandler = (RHRMultiplayerHandler)ScriptableObject.CreateInstance("RHRMultiplayerHandler");
 			multiplayerHandler.SetPlayerNick(playerNick);
+			multiplayerHandler.StartUp();
+		}
+		
+		public void Destroy() {
+			multiplayerHandler.CloseDown();	
 		}
 		
 		// Wysyla dane i czysci bufory
@@ -122,6 +134,16 @@ namespace rhr_multi
 		public int GetPlayerNr()
 		{
 			return playerNr;
+		}
+		
+		public string GetPlayerNick()
+		{
+			return playerNick;	
+		}
+		
+		public string GetEnemyNick()
+		{
+			return enemyNick;	
 		}
 		
 		public bool IsDuringGame()

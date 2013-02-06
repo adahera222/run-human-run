@@ -247,7 +247,6 @@ function SendData(positions: Vector3[], padsStates: PadState[]) {
 			Debug.LogError("EnvGenScript: unable to find second player proxy");
 		} else {
 			var clientServer = clientServerObj.GetComponent("ClientServer") as ClientServer;
-			Debug.Log("CS: " + clientServer);
 			clientServer.SendUpdateState(data);
 		}
 	}

@@ -49,13 +49,13 @@ namespace rhr_multi
        
 		public RHRMultiplayerHandler()
 		{
-			StartUp();
+			sFoundName = new ArrayList();
 		}
 		
 		public RHRMultiplayerHandler(string nick)
 		{
+			sFoundName = new ArrayList();
 			playerNick = nick;
-			StartUp();
 		}
 		
 		public void Start()
@@ -620,6 +620,8 @@ namespace rhr_multi
 			myAdvertisedName = null;
 			
 			AllJoynStarted = false;
+			
+			sFoundName = new ArrayList();
 			
 			AllJoyn.StopAllJoynProcessing();
 		}
