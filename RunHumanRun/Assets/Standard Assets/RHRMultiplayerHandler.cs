@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace rhr_multi
 {
-	class RHRMultiplayerHandler : MonoBehaviour
+	class RHRMultiplayerHandler : ScriptableObject
 	{
 		private const string INTERFACE_NAME = "org.alljoyn.bus.rhrmulti";
 		private const string SERVICE_NAME = "org.alljoyn.bus.rhrmulti";
@@ -44,7 +44,13 @@ namespace rhr_multi
 		private double[] enemyInput = new double[0];
 		private double[] enemyPos = new double[0];
 		private static Mutex mutex = new Mutex();
+		
+		private static bool allJoynDebugOn = false;
        
+		public RHRMultiplayerHandler()
+		{
+			StartUp();
+		}
 		
 		public RHRMultiplayerHandler(string nick)
 		{
@@ -179,6 +185,11 @@ namespace rhr_multi
 			return advertisedName.Substring(delimiterIndex);
 		}
 		
+		public void SetPlayerNick(string nick)
+		{
+			playerNick = nick;
+		}
+		
 		public void SetConnectedPlayerNick(string nick)
 		{
 			connectedPlayerNick = nick;
@@ -189,6 +200,13 @@ namespace rhr_multi
 			return connectedPlayerNick;
 		}
 		
+		private static void DebugLog(string msg) {
+			if (allJoynDebugOn)
+			{
+				Debug.Log(msg);
+				debugText = msg + "\n" + debugText;
+			}
+		}
 		
 		// FUNKCJE OBSLUGUJACE WIADOMOSCI
 		// OTRZYMYWANE OD DRUGIEGO GRACZA
@@ -201,7 +219,7 @@ namespace rhr_multi
 			
 			if (enemyInput.Length > 0)
 			{
-				Debug.Log("VSH: enemy Input not empty");	
+				DebugLog("VSH: enemy Input not empty");	
 				SetEnemyInput(enemyInput);
 			}
 			if (enemyPos.Length > 0)
@@ -229,8 +247,7 @@ namespace rhr_multi
 				AllJoyn.QStatus status = AddInterface(exampleIntf);
 				if(!status)
 				{
-					debugText = "RHR Failed to add interface " + status.ToString() + "\n" + debugText;
-					Debug.Log("RHR Failed to add interface " + status.ToString());
+					DebugLog("RHR Failed to add interface " + status.ToString());
 				}
 				
 				vectorMember = exampleIntf.GetMember("vector");
@@ -238,9 +255,7 @@ namespace rhr_multi
 
 			protected override void OnObjectRegistered ()
 			{
-			
-				debugText = "RHR ObjectRegistered has been called\n" + debugText;
-				Debug.Log("RHR ObjectRegistered has been called");
+				DebugLog("RHR ObjectRegistered has been called");
 			}
 			
 			public void SendData(double[] playerInput, double[] playerPos, double[] envData)
@@ -251,9 +266,8 @@ namespace rhr_multi
 				payload[2].Set((double[])envData);
 				
 				AllJoyn.QStatus status = Signal(null, currentSessionId, vectorMember, payload, 0, 64);
-				if(!status) {
-					Debug.Log("RHR failed to send vector(data) signal: "+status.ToString());	
-					debugText += "RHR failed to send vector(data) signal: "+status.ToString() + "\n" + debugText;
+				if (!status) {
+					DebugLog("RHR failed to send vector(data) signal: "+status.ToString());	
 				}
 			}
 		}
@@ -262,13 +276,12 @@ namespace rhr_multi
 		{
 			protected override void FoundAdvertisedName(string name, AllJoyn.TransportMask transport, string namePrefix)
 			{
-				debugText = "RHR FoundAdvertisedName(name=" + name + ", prefix=" + namePrefix + ")\n" + debugText;
-				Debug.Log("RHR FoundAdvertisedName(name=" + name + ", prefix=" + namePrefix + ")");
-				if(string.Compare(myAdvertisedName, name) == 0)
+				DebugLog("RHR FoundAdvertisedName(name=" + name + ", prefix=" + namePrefix + ")");
+				if (string.Compare(myAdvertisedName, name) == 0)
 				{
-					debugText = "Ignoring my advertisement\n" + debugText;
-					Debug.Log("Ignoring my advertisement");
-				} else if(string.Compare(SERVICE_NAME, namePrefix) == 0)
+					DebugLog("Ignoring my advertisement");
+				}
+				else if (string.Compare(SERVICE_NAME, namePrefix) == 0)
 				{
 					sFoundName.Add(name);
 				}
@@ -276,22 +289,18 @@ namespace rhr_multi
 
             protected override void ListenerRegistered(AllJoyn.BusAttachment busAttachment)
             {
-                debugText = "RHR ListenerRegistered: busAttachment=" + busAttachment + "\n" + debugText;
-                Debug.Log("RHR ListenerRegistered: busAttachment=" + busAttachment);
+                DebugLog("RHR ListenerRegistered: busAttachment=" + busAttachment);
             }
 
 			protected override void NameOwnerChanged(string busName, string previousOwner, string newOwner)
 			{
-				debugText = "RHR NameOwnerChanged: name=" + busName + ", oldOwner=" +
-					previousOwner + ", newOwner=" + newOwner + "\n" + debugText;
-				Debug.Log("RHR NameOwnerChanged: name=" + busName + ", oldOwner=" +
+				DebugLog("RHR NameOwnerChanged: name=" + busName + ", oldOwner=" +
 					previousOwner + ", newOwner=" + newOwner);
 			}
 			
 			protected override void LostAdvertisedName(string name, AllJoyn.TransportMask transport, string namePrefix)
 			{
-				debugText = "RHR LostAdvertisedName(name=" + name + ", prefix=" + namePrefix + ")\n" + debugText;
-				Debug.Log("RHR LostAdvertisedName(name=" + name + ", prefix=" + namePrefix + ")");
+				DebugLog("RHR LostAdvertisedName(name=" + name + ", prefix=" + namePrefix + ")");
 				sFoundName.Remove(name);
 			}
 		}
@@ -310,14 +319,10 @@ namespace rhr_multi
 			
 				if (sessionPort != SERVICE_PORT)
 				{
-					debugText = "RHR Rejecting join attempt on unexpected session port " + sessionPort + "\n" + debugText;
-					Debug.Log("RHR Rejecting join attempt on unexpected session port " + sessionPort);
+					DebugLog("RHR Rejecting join attempt on unexpected session port " + sessionPort);
 					return false;
 				}
-				debugText = "RHR Accepting join session request from " + joiner + 
-					" (opts.proximity=" + opts.Proximity + ", opts.traffic=" + opts.Traffic + 
-					", opts.transports=" + opts.Transports + ")\n" + debugText;
-				Debug.Log("RHR Accepting join session request from " + joiner + 
+				DebugLog("RHR Accepting join session request from " + joiner + 
 					" (opts.proximity=" + opts.Proximity + ", opts.traffic=" + opts.Traffic + 
 					", opts.transports=" + opts.Transports + ")");
 				return true;
@@ -325,8 +330,7 @@ namespace rhr_multi
 					
 			protected override void SessionJoined(ushort sessionPort, uint sessionId, string joiner)
 			{
-				Debug.Log("Session Joined!!!!!!");
-				debugText = "Session Joined!!!!!! \n" + debugText;
+				DebugLog("Session Joined!!!!!!");
 				currentSessionId = sessionId;
 				currentJoinedSession = myAdvertisedName;
 				multiplayerHandler.SetConnectedPlayerNick(joiner);
@@ -350,20 +354,17 @@ namespace rhr_multi
 			{
 				multiplayerHandler.SetConnectedPlayerNick("");
 				multiplayerHandler.GameEnded();
-				debugText = "SessionLost ("+sessionId+") \n" + debugText;	
-				Debug.Log("SessionLost ("+sessionId+")");
+				DebugLog("SessionLost ("+sessionId+")");
 			}
 			
 			protected override void SessionMemberAdded(uint sessionId, string uniqueName)
 			{
-				debugText = "SessionMemberAdded ("+sessionId+","+uniqueName+") \n" + debugText;	
-				Debug.Log("SessionMemberAdded ("+sessionId+","+uniqueName+")");
+				DebugLog("SessionMemberAdded ("+sessionId+","+uniqueName+")");
 			}
 
 			protected override void SessionMemberRemoved(uint sessionId, string uniqueName)
 			{	
-				debugText = "SessionMemberRemoved ("+sessionId+","+uniqueName+") \n" + debugText;	
-				Debug.Log("SessionMemberRemoved ("+sessionId+","+uniqueName+")");
+				DebugLog("SessionMemberRemoved ("+sessionId+","+uniqueName+")");
 			}
 		}
 		
@@ -376,76 +377,67 @@ namespace rhr_multi
 		
 		public void StartUp()
 		{
-			debugText = "Starting AllJoyn\n\n\n" + debugText;
+			DebugLog("Starting AllJoyn");
 			AllJoynStarted = true;
 			AllJoyn.QStatus status = AllJoyn.QStatus.OK;
 			{
-				debugText = "Creating BusAttachment\n" + debugText;
+				DebugLog("Creating BusAttachment");
 				msgBus = new AllJoyn.BusAttachment("myApp", true);
 	
 				status = msgBus.CreateInterface(INTERFACE_NAME, false, out testIntf);
-				if(status)
+				if (status)
 				{
-					debugText = "RHR Interface Created.\n" + debugText;
-					Debug.Log("RHR Interface Created.");
+					DebugLog("RHR Interface Created.");
 					testIntf.AddSignal ("vector", "adadad", "points", 0);
 					testIntf.Activate();
 				}
 				else
 				{
-					debugText = "Failed to create interface 'org.alljoyn.Bus.chat'\n" + debugText;
-					Debug.Log("Failed to create interface 'org.alljoyn.Bus.chat'");
+					DebugLog("Failed to create interface 'org.alljoyn.Bus.chat'");
 				}
 	
 				busListener = new MyBusListener();
-				if(status)
+				if (status)
 				{
 					msgBus.RegisterBusListener(busListener);
-					debugText = "RHR BusListener Registered.\n" + debugText;
-					Debug.Log("RHR BusListener Registered.");
+					DebugLog("RHR BusListener Registered.");
 				}
 				
 				
-				if(testObj == null)
+				if (testObj == null)
 					testObj = new TestBusObject(msgBus, SERVICE_PATH);
 				
-				if(status)
+				if (status)
 				{
 					status = msgBus.Start();
-					if(status)
+					if (status)
 					{
-						debugText = "RHR BusAttachment started.\n" + debugText;
-						Debug.Log("RHR BusAttachment started.");
+						DebugLog("RHR BusAttachment started.");
 						
 						msgBus.RegisterBusObject(testObj);
 						for (int i = 0; i < connectArgs.Length; ++i)
 						{
-							debugText = "RHR Connect trying: "+connectArgs[i]+"\n" + debugText;
-							Debug.Log("RHR Connect trying: "+connectArgs[i]);
+							DebugLog("RHR Connect trying: "+connectArgs[i]);
 							status = msgBus.Connect(connectArgs[i]);
 							if (status)
 							{
-								debugText = "BusAttchement.Connect(" + connectArgs[i] + ") SUCCEDED.\n" + debugText;
-								Debug.Log("BusAttchement.Connect(" + connectArgs[i] + ") SUCCEDED.");
+								DebugLog("BusAttchement.Connect(" + connectArgs[i] + ") SUCCEDED.");
 								connectedVal = connectArgs[i];
 								break;
 							}
 							else
 							{
-								debugText = "BusAttachment.Connect(" + connectArgs[i] + ") failed.\n" + debugText;
-								Debug.Log("BusAttachment.Connect(" + connectArgs[i] + ") failed.");
+								DebugLog("BusAttachment.Connect(" + connectArgs[i] + ") failed.");
 							}
 						}
-						if(!status)
+						if (!status)
 						{
-							debugText = "BusAttachment.Connect failed.\n" + debugText;
-							Debug.Log("BusAttachment.Connect failed.");
+							DebugLog("BusAttachment.Connect failed.");
 						}
 					}
 					else
 					{
-						debugText = "RHR BusAttachment.Start failed.\n" + debugText;
-						Debug.Log("RHR BusAttachment.Start failed.");
+						DebugLog("RHR BusAttachment.Start failed.");
 					}
 				}
 				
@@ -453,102 +445,89 @@ namespace rhr_multi
 				
 				AllJoyn.InterfaceDescription.Member vectorMember = testIntf.GetMember ("vector");
 				status = msgBus.RegisterSignalHandler(this.VectorSignalHandler, vectorMember, null);
-				if(!status)
+				if (!status)
 				{
-					debugText ="RHR Failed to add vector signal handler " + status + "\n" + debugText;
-					Debug.Log("RHR Failed to add vector signal handler " + status);
+					DebugLog("RHR Failed to add vector signal handler " + status);
 				}
-				else {			
-					debugText ="RHR add vector signal handler " + status + "\n" + debugText;
-					Debug.Log("RHR add vector signal handler " + status);
+				else
+				{			
+					DebugLog("RHR add vector signal handler " + status);
 				}
 				
 				status = msgBus.AddMatch("type='signal',member='vector'");
-				if(!status)
+				if (!status)
 				{
-					debugText ="RHR Failed to add vector Match " + status.ToString() + "\n" + debugText;
-					Debug.Log("RHR Failed to add vector Match " + status.ToString());
+					DebugLog("RHR Failed to add vector Match " + status.ToString());
 				}
-				else {			
-					debugText ="RHR add vector Match " + status.ToString() + "\n" + debugText;
-					Debug.Log("RHR add vector Match " + status.ToString());
+				else
+				{			
+					DebugLog("RHR add vector Match " + status.ToString());
 				}
 			}
 			
-			if(status)
+			if (status)
 			{
-			
 				status = msgBus.RequestName(myAdvertisedName,
 					AllJoyn.DBus.NameFlags.ReplaceExisting | AllJoyn.DBus.NameFlags.DoNotQueue);
-				if(!status)
+				if (!status)
 				{
-					debugText ="RHR RequestName(" + SERVICE_NAME + ") failed (status=" + status + ")\n" + debugText;
-					Debug.Log("RHR RequestName(" + SERVICE_NAME + ") failed (status=" + status + ")");
+					DebugLog("RHR RequestName(" + SERVICE_NAME + ") failed (status=" + status + ")");
 				}
 			}
 
 			opts = new AllJoyn.SessionOpts(AllJoyn.SessionOpts.TrafficType.Messages, false,
 					AllJoyn.SessionOpts.ProximityType.Any, AllJoyn.TransportMask.Any);
-			if(status)
+			if (status)
 			{
-			
 				ushort sessionPort = SERVICE_PORT;
 				sessionPortListener = new MySessionPortListener(this);
 				status = msgBus.BindSessionPort(ref sessionPort, opts, sessionPortListener);
-				if(!status || sessionPort != SERVICE_PORT)
+				if (!status || sessionPort != SERVICE_PORT)
 				{
-					debugText = "RHR BindSessionPort failed (" + status + ")\n" + debugText;
-					Debug.Log("RHR BindSessionPort failed (" + status + ")");
+					DebugLog("RHR BindSessionPort failed (" + status + ")");
 				}
-				debugText = "RHR BindSessionPort on port (" + sessionPort + ")\n" + debugText;
-				Debug.Log("RHR BBindSessionPort on port (" + sessionPort + ")");;
+				DebugLog("RHR BBindSessionPort on port (" + sessionPort + ")");;
 			}
 
-			if(status)
+			if (status)
 			{
 				status = msgBus.AdvertiseName(myAdvertisedName, opts.Transports);
-				if(!status)
+				if (!status)
 				{
-					debugText = "RHR Failed to advertise name " + myAdvertisedName + " (" + status + ")\n" + debugText;
-					Debug.Log("RHR Failed to advertise name " + myAdvertisedName + " (" + status + ")");
+					DebugLog("RHR Failed to advertise name " + myAdvertisedName + " (" + status + ")");
 				}
 			}
 			
 			status = msgBus.FindAdvertisedName(SERVICE_NAME);
-			if(!status)
+			if (!status)
 			{
-				debugText = "RHR org.alljoyn.Bus.FindAdvertisedName failed.\n" + debugText;
-				Debug.Log("RHR org.alljoyn.Bus.FindAdvertisedName failed.");
+				DebugLog("RHR org.alljoyn.Bus.FindAdvertisedName failed.");
 			}
 		}
 		
 		public bool JoinSession(string session)
 		{
-			if(currentJoinedSession != null)
+			if (currentJoinedSession != null)
 				LeaveSession();
 			AllJoyn.QStatus status = AllJoyn.QStatus.NONE;
-			if(sessionListener != null) {
+			if (sessionListener != null) {
 				status = msgBus.SetSessionListener(null, currentSessionId);
 				sessionListener = null;
-				if(!status) {
-	            	debugText = "SetSessionListener failed status(" + status.ToString() + ")\n" + debugText;
-					Debug.Log("SetSessionListener status(" + status.ToString() + ")");
+				if (!status) {
+					DebugLog("SetSessionListener status(" + status.ToString() + ")");
 				}
 			}
 			sessionListener = new MySessionListener(this);
-			debugText = "About to call JoinSession (Session=" + session + ")\n" + debugText;
-			Debug.Log("About to call JoinSession (Session=" + session + ")");
+			DebugLog("About to call JoinSession (Session=" + session + ")");
 			status = msgBus.JoinSession(session, SERVICE_PORT, sessionListener, out currentSessionId, opts);
 			if(status)
 			{
-				debugText = "Client JoinSession SUCCESS (Session id=" + currentSessionId + ")\n" + debugText;
-				Debug.Log("Client JoinSession SUCCESS (Session id=" + currentSessionId + ")");
+				DebugLog("Client JoinSession SUCCESS (Session id=" + currentSessionId + ")");
 				currentJoinedSession = session;
 			}
 			else
 			{
-				debugText = "RHR JoinSession failed (status=" + status.ToString() + ")\n" + debugText;
-				Debug.Log("RHR JoinSession failed (status=" + status.ToString() + ")");
+				DebugLog("RHR JoinSession failed (status=" + status.ToString() + ")");
 			}
 			
 			return status ? true : false;
@@ -556,88 +535,77 @@ namespace rhr_multi
 		
 		public void LeaveSession()
 		{
-			Debug.Log("in LeaveSession.");
-			if(currentSessionId != 0) {
+			DebugLog("in LeaveSession.");
+			if (currentSessionId != 0) {
 				AllJoyn.QStatus status = AllJoyn.QStatus.NONE;
-				if(sessionListener != null) {
-					Debug.Log("clear session listener");
+				if (sessionListener != null) {
+					DebugLog("clear session listener");
 					status = msgBus.SetSessionListener(null, currentSessionId);
 					sessionListener = null;
-					if(!status) {
-		            	debugText = "SetSessionListener failed status(" + status.ToString() + ")\n" + debugText;
-						Debug.Log("SetSessionListener status(" + status.ToString() + ")");
+					if (!status) {
+						DebugLog("SetSessionListener status(" + status.ToString() + ")");
 					}
 				}
-				Debug.Log("about to leave session");
+				DebugLog("about to leave session");
 				status = msgBus.LeaveSession(currentSessionId);
-				if(status)
+				if (status)
 				{
-					debugText = "RHR LeaveSession SUCCESS (Session id=" + currentSessionId + ")\n" + debugText;
-					Debug.Log("RHR LeaveSession SUCCESS (Session id=" + currentSessionId + ")");
+					DebugLog("RHR LeaveSession SUCCESS (Session id=" + currentSessionId + ")");
 					currentSessionId = 0;
 					currentJoinedSession = null;
 				}
 				else
 				{
-					debugText = "RHR LeaveSession failed (status=" + status.ToString() + ")\n" + debugText;
-					Debug.Log("RHR LeaveSession failed (status=" + status.ToString() + ")");
+					DebugLog("RHR LeaveSession failed (status=" + status.ToString() + ")");
 				}
 			} else {
 				currentJoinedSession = null;
 			}
-			Debug.Log("done LeaveSession.");
+			DebugLog("done LeaveSession.");
 		}
 		
 		public void CloseDown()
 		{	
-			if(msgBus == null)
+			if (msgBus == null)
 				return;
 			AllJoynStarted = false;
 			LeaveSession();
 			AllJoyn.QStatus status = msgBus.CancelFindAdvertisedName(SERVICE_NAME);
-			if(!status) {
-            	debugText = "CancelAdvertisedName failed status(" + status.ToString() + ")\n" + debugText;
-				Debug.Log("CancelAdvertisedName failed status(" + status.ToString() + ")");
+			if (!status){
+				DebugLog("CancelAdvertisedName failed status(" + status.ToString() + ")");
 			}
 			status = msgBus.CancelAdvertisedName(myAdvertisedName, opts.Transports);
-			if(!status) {
-            	debugText = "CancelAdvertisedName failed status(" + status.ToString() + ")\n" + debugText;
-				Debug.Log("CancelAdvertisedName failed status(" + status.ToString() + ")");
+			if (!status) {
+				DebugLog("CancelAdvertisedName failed status(" + status.ToString() + ")");
 			}
 			status = msgBus.ReleaseName(myAdvertisedName);
-			if(!status) {
-            	debugText = "ReleaseName failed status(" + status.ToString() + ")\n" + debugText;
-				Debug.Log("ReleaseName status(" + status.ToString() + ")");
+			if (!status) {
+				DebugLog("ReleaseName status(" + status.ToString() + ")");
 			}
 			status = msgBus.UnbindSessionPort(SERVICE_PORT);
-			if(!status) {
-            	debugText = "UnbindSessionPort failed status(" + status.ToString() + ")\n" + debugText;
-				Debug.Log("UnbindSessionPort status(" + status.ToString() + ")");
+			if (!status) {
+				DebugLog("UnbindSessionPort status(" + status.ToString() + ")");
 			}
 			
 			status = msgBus.Disconnect(connectedVal);
-			if(!status) {
-            	debugText = "Disconnect failed status(" + status.ToString() + ")\n" + debugText;
-				Debug.Log("Disconnect status(" + status.ToString() + ")");
+			if (!status) {
+				DebugLog("Disconnect status(" + status.ToString() + ")");
 			}
 			
 			AllJoyn.InterfaceDescription.Member vectorMember = testIntf.GetMember("vector");
 			status = msgBus.UnregisterSignalHandler(this.VectorSignalHandler, vectorMember, null);
 			vectorMember = null;
-			if(!status) {
-            	debugText = "UnregisterSignalHandler Vector failed status(" + status.ToString() + ")\n" + debugText;
-				Debug.Log("UnregisterSignalHandler Vector status(" + status.ToString() + ")");
+			if (!status) {
+				DebugLog("UnregisterSignalHandler Vector status(" + status.ToString() + ")");
 			}
-			if(sessionListener != null) {
+			if (sessionListener != null) {
 				status = msgBus.SetSessionListener(null, currentSessionId);
 				sessionListener = null;
-				if(!status) {
-	            	debugText = "SetSessionListener failed status(" + status.ToString() + ")\n" + debugText;
-					Debug.Log("SetSessionListener status(" + status.ToString() + ")");
+				if (!status) {
+					DebugLog("SetSessionListener status(" + status.ToString() + ")");
 				}
 			}
-			debugText = "No Exceptions(" + status.ToString() + ")\n" + debugText;
-			Debug.Log("No Exceptions(" + status.ToString() + ")");
+			DebugLog("No Exceptions(" + status.ToString() + ")");
 			currentSessionId = 0;
 			currentJoinedSession = null;
 			sFoundName.Clear();

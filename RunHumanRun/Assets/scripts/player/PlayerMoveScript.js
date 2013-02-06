@@ -143,7 +143,7 @@ function GetPlayerInput() : PlayerInputState {
 }
 
 function SendInput(input: PlayerInputState) {
-	Debug.Log("Send nonempty input = " + input.isJumping + "|" + input.isDodgingLeft + "|" + input.isDodgingRight);
+	//Debug.Log("Send nonempty input = " + input.isJumping + "|" + input.isDodgingLeft + "|" + input.isDodgingRight);
 	var clientServerObj = GameObject.Find("ClientServer");
 	if (clientServerObj == null) {
 		Debug.LogError("PlayerMoveScript: unable to find second player proxy");

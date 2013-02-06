@@ -50,6 +50,10 @@ private var buttonSize = 75;
 
 private var gameManager: GameManager;
 
+function Start() {
+	DontDestroyOnLoad(gameObject);
+}
+
 
 function OnGUI () {
 	InitValues();
@@ -68,7 +72,6 @@ function OnGUI () {
 }
 
 function InitValues () {
-	DontDestroyOnLoad(gameObject);
 	if (gSkin) {
 		GUI.skin = gSkin;
 	}
@@ -116,8 +119,10 @@ function InitState () {
 
 function FindGameState () {
 	if (clientServer.IsDuringGame()) {
-		Application.LoadLevel("Chase");
+		var audioListener = GetComponent("AudioListener") as AudioListener;
+		audioListener.enabled = false;
 		settingsState = MultiplayerState.ConnectState;
+		Application.LoadLevel("Chase");
 		return;
 	}
 	

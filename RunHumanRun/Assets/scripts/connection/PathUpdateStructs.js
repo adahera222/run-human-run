@@ -83,8 +83,6 @@ public class PathStateRaw extends System.ValueType {
 			Debug.Log("Points count index: " + pointsCountIndex);
 			Debug.Log("Obst count: " + obstaclesCount);
 			Debug.Log("Obst count index: " + obstaclesCountIndex);
-		} else {
-			Debug.Log("PathStateRaw.Validate(): validated");
 		}
 	}
 	

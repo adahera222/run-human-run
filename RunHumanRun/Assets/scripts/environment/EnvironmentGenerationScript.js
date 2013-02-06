@@ -112,9 +112,16 @@ function Start () {
 	singlePlayerMode = gameManager.IsSinglePlayerGame();
 	meGenerating = gameManager.IsObjGenerating(gameObject);
 	
-	var proxy = GetComponent("ProxyEnvironmentGenerator") as ProxyEnvironmentGenerator;
-	proxy.CopyPrefabs(pathPrefabs, obstaclesPrefabs);
-	proxy.Init();
+	if (gameManager.IsProxyObjGenerating(gameObject)) {
+		var firstProxy = gameManager.GetFirstProxy();
+		firstProxy.CopyPrefabs(pathPrefabs, obstaclesPrefabs);
+		firstProxy.Init();
+		
+		var secondProxy = gameManager.GetSecondProxy();
+		secondProxy.CopyPrefabs(pathPrefabs, obstaclesPrefabs);
+		secondProxy.Init();
+	}
+	
 	if (meGenerating) {
 		UpdatePath(pathGenerator.GenerateInitialPath());
 	}

@@ -41,8 +41,8 @@ namespace rhr_multi
 			isWorking = true;
 			playerNick = nick;
 			playerNr = 1;
-			Debug.Log("Starting up AllJoyn service and client");
-			multiplayerHandler = new RHRMultiplayerHandler(playerNick);
+			multiplayerHandler = (RHRMultiplayerHandler)ScriptableObject.CreateInstance("RHRMultiplayerHandler");
+			multiplayerHandler.SetPlayerNick(playerNick);
 		}
 		
 		// Wysyla dane i czysci bufory

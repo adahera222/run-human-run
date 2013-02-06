@@ -44,13 +44,3 @@ public class PlayerInputState extends System.ValueType {
 		return PlayerInputState(false, false, false);
 	}
 }
-
-/*
-function Start () {
-
-}
-
-function Update () {
-
-}
-*/
