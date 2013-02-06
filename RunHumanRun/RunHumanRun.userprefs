@@ -2,9 +2,7 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
   <MonoDevelop.Ide.Workbench ActiveDocument="Assets\scripts\environment\ObstacleCollisionScript.js">
     <Files>
-      <File FileName="Assets\scripts\environment\ObstacleCollisionScript.js" Line="70" Column="4" />
-      <File FileName="Assets\scripts\connection\ProxyEnvironmentGenerator.js" Line="1" Column="1" />
-      <File FileName="Assets\scripts\environment\EnvironmentGenerationScript.js" Line="1" Column="1" />
+      <File FileName="Assets\scripts\environment\ObstacleCollisionScript.js" Line="68" Column="6" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

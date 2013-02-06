@@ -119,7 +119,7 @@ function Update () {
 	
 	var playerStatus : ThirdPersonStatus = GetComponent(ThirdPersonStatus);
 	var mobileInputController : MobileInputController = GetComponent(MobileInputController);
-	var moveBonus = mobileInputController.GetMoveBonus();
+	var moveBonus = mobileInputController.GetMoveBonus() + playerStatus.GetMoveBonus();;
 	Move(moveBonus);
 	playerStatus.AddPoints(Time.deltaTime);
 	playerStatus.AddBonusPoints(moveBonus);
@@ -293,18 +293,6 @@ function SlowDown(obstacleMass: float) {
 	var totalMass = obstacleMass + transform.rigidbody.mass;
 	var slowFactor = (transform.rigidbody.mass / totalMass) / hitPenealty;
 	speed = slowFactor * speed;
-}
-
-// Wykrywane jest, czy kontroler koliduje z podlozem. Jesli tak, to predkosc
-// pozioma jest zerowana.
-function OnControllerColliderHit (hit : ControllerColliderHit) {
-	if (hit.controller.collisionFlags) {
-		Land();
-	}
-	
-	// celem debugowania
-	if (hit.gameObject.name != "PathPadPrefab(Clone)")
-		Debug.Log("HIT FROM BOTTOM: " + hit.gameObject.name);
 }
 
 // RUCH W PIONIE
